@@ -1,0 +1,11 @@
+# Adds dev-only requirements, if you have a local copy of EmberMaker for development.
+# To install requirements, run  pip install -r requirements-dev.txt
+-r requirements.txt
+numpy
+reportlab
+defusedxml
+openpyxl
+pdf2image
+svg-py
+lxml
+markdown

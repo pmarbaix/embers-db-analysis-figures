@@ -2,19 +2,11 @@
 Usage : python edb_paper_xy.py <settings name in settings_datasets_configs.py> [<optional graph type>]
 """
 import numpy as np
-import embermaker.helpers as embhlp
 import matplotlib.pyplot as plt
 import helpers
 from embermaker.embergraph import EmberGraph
 from embermaker import ember as emb
 from sys import exit
-
-# import random
-logger = embhlp.Logger()  # Standard log function in EmberMaker
-
-# Create a dumb ember graph because we need a cpal (might be removed later)
-egr = EmberGraph()
-labes = []
 
 
 def main(**kwargs):
@@ -31,42 +23,42 @@ def main(**kwargs):
     ax.set_title(settings["title"], pad=36, fontsize=9)
     plt.ylim((-0.1, 3.1))
 
+    # Create storage for the "aggregated ember(s)" (one may be added for each data subset)
+    aggreg_bes = []
+
     # Loop over data subsets (defined in the settings)
-    # ------------------------------------------------
-    dsets = helpers.DSets(settings)
-    for iis, dset in enumerate(dsets):
-        print(f"Processing source: {iis} => {dset['name']}")
+    for dset in helpers.DSets(settings):
+        print(f"Processing source: {dset["idset"]} => {dset['name']}")
+        percentiles(dset, hazls, fig, aggreg_bes)
 
-        # Get data for the current subset (dset), from the server or file
-        data = helpers.getdata(dset)
-        lbes = data['lbes']
-
-        # Optionally remove embers that are not "complete", that is, which were not assessed for our full graph range
-        if dset and 'remove_incomplete' in dset:
-            lbes = rem_incomplete(lbes, hazls[-1])
-
-        if dset["type"] == "percentiles":
-            labes = percentiles(data, lbes, dset, hazls, fig, iis)
-        else:
-            labes = None
-
+    # Finalise the x-y percentile and/or median plots
     plt.rcParams['svg.fonttype'] = 'none'
     fig.savefig(f"out/{settings['out_file']}.svg", format="svg")
     plt.show()
 
-    # Create the ember graph, if any embers were created, and draw
-    if labes:
+    # Create the aggregated ember graph, if embers were created, and draw
+    if aggreg_bes:
         outfile = 'out/ember_' + settings['out_file']
         agr = EmberGraph(outfile, grformat="PDF")
         agr.gp['haz_axis_top'] = 4.0
         agr.gp['conf_lines_ends'] = 'arrow'  # 'bar', 'arrow', or 'datum' (or None)
-        agr.gp['leg_pos'] = 'none'
-        agr.add(labes)
+        agr.gp['leg_pos'] = 'none'  # No risk levels legend
+        agr.add(aggreg_bes)
         agr.draw()
 
-def percentiles(data, lbes, dset, hazls, fig, iis):
-    # Percentiles, mean and median diagrams
-    # -------------------------------------
+
+def percentiles(dset, hazlevels, fig, aggreg_bes):
+    """
+    Percentiles, mean and median plots
+    """
+    # Get data for the current subset (dset)
+    data = helpers.getdata(dset)
+    lbes = data['lbes']
+
+    # Optionally remove embers that are not "complete", that is, which were not assessed for our full graph range
+    if 'remove_incomplete' in dset:
+        lbes = helpers.rem_incomplete(lbes, hazlevels[-1])
+
     ax = fig.axes[0]
     if 'wchapter' in dset:  # Optional 'per chapter' weighting
         emb_figs = data['emb_figs']
@@ -76,26 +68,26 @@ def percentiles(data, lbes, dset, hazls, fig, iis):
     print(f'Full list of embers longnames and ids {[be.longname + " (" + str(be.id) + ")" for be in lbes]}')
 
     # Calculate risk percentiles and averages:
-    risk_p10, risk_p50, risk_p90, risk_avgs = aggreg(lbes, hazls, exprisk=dset.get('exprisk', False),
-                                                     ax=ax, iis=iis, dset=dset, emb_figs=emb_figs)
+    risk_p10, risk_p50, risk_p90, risk_avgs = aggreg(lbes, hazlevels, exprisk=dset.get('exprisk', False),
+                                                     ax=ax, idset=dset["idset"], dset=dset, emb_figs=emb_figs)
 
     # Coloured background
-    helpers.embers_col_background(xlim=(float(hazls[0]), float(hazls[-1])))
+    helpers.embers_col_background(xlim=(float(hazlevels[0]), float(hazlevels[-1])))
 
     # Plot
     if 'mean' in dset['subtype']:
         # Plot mean
-        ax.plot(hazls, risk_avgs, color=dset['style'][0], linestyle='-')
+        ax.plot(hazlevels, risk_avgs, color=dset['style'][0], linestyle='-')
     if 'median' in dset['subtype']:
         # and/or the median
-        ax.plot(hazls, risk_p50, color=dset['style'][0], linestyle='--')
+        ax.plot(hazlevels, risk_p50, color=dset['style'][0], linestyle='--')
         emberbase = risk_p50  # if median is shown, it will be the choice for the ember
     else:
         emberbase = risk_avgs
     # Plot percentiles
     if dset["ndsets"] <= 2 and len(dset['subtype']) < 2:  # add these percentiles if plot is not 'crowded' w. lines.
-        ax.plot(hazls, risk_p10, color=dset['style'][0], linestyle="--")
-        ax.plot(hazls, risk_p90, color=dset['style'][0], linestyle="--")
+        ax.plot(hazlevels, risk_p10, color=dset['style'][0], linestyle="--")
+        ax.plot(hazlevels, risk_p90, color=dset['style'][0], linestyle="--")
 
     ax.grid(axis='x', color='0.65')
 
@@ -103,38 +95,38 @@ def percentiles(data, lbes, dset, hazls, fig, iis):
     # - - - - - - - - -
     abe = emb.Ember(name=dset['name'], haz_valid=[0, 4], haz_name_std='GMT')
 
-    aghaz = lambda risk: np.interp(risk, emberbase, hazls)
-    percentiles = {'tmin': 0.001, 'p5': 0.05, 'p10': 0.1, 'p20': 0.2, 'p30': 0.3, 'p40': 0.4, 'p50': 0.5,
-                   'p60': 0.6, 'p70': 0.7, 'p80': 0.8, 'p90': 0.9, 'p95': 0.95, 'tmax': 0.999}
+    def aggreghaz(risk):
+        return np.interp(risk, emberbase, hazlevels)
+    calc_for_percent = {'tmin': 0.001, 'p5': 0.05, 'p10': 0.1, 'p20': 0.2, 'p30': 0.3, 'p40': 0.4, 'p50': 0.5,
+                        'p60': 0.6, 'p70': 0.7, 'p80': 0.8, 'p90': 0.9, 'p95': 0.95, 'tmax': 0.999}
     maxrisk = emberbase[-1]
 
     # Undetectable to moderate (calculate levels within the transition + add transition to burning ember)
-    translevels = {per: aghaz(val) for per, val in percentiles.items()}
+    translevels = {per: aggreghaz(val) for per, val in calc_for_percent.items()}
     abe.trans_create(name='undetectable to moderate', confidence='undefined', **translevels)
     # Modertate to high
-    translevels = {per: aghaz(1.0 + val) for per, val in percentiles.items()}
+    translevels = {per: aggreghaz(1.0 + val) for per, val in calc_for_percent.items()}
     abe.trans_create(name='moderate to high', confidence='undefined', **translevels)
-    print("Moderate to high: " + str([f"{ky}: {tr:.2f}{egr.gp['haz_unit']}" for ky, tr in translevels.items()]))
+    print("Moderate to high: " + str([f"{ky}: {tr:.2f}°C" for ky, tr in translevels.items()]))
     # High to very high
     # Note: max risk is generally not reached on average! => avoid undefined levels + add true max risk:
-    translevels: dict = {pcent: aghaz(2.0 + val) for pcent, val in percentiles.items() if 2.0 + val < maxrisk}
+    translevels: dict = {pcent: aggreghaz(2.0 + val) for pcent, val in calc_for_percent.items() if 2.0 + val < maxrisk}
     if 'tmax' not in translevels:
         per = f"p{int((maxrisk - 2.0) * 100)}"
-        translevels[per] = aghaz(maxrisk)
+        translevels[per] = aggreghaz(maxrisk)
         translevels['tmax'] = 5.0  # A max is needed so that the transition's range (vertical bar) has an end
     abe.trans_create(name='high to very high', confidence='undefined', **translevels)
-    print("High to very high: " + str([f"{ky}: {tr:.2f}{egr.gp['haz_unit']}" for ky, tr in translevels.items()]))
+    print("High to very high: " + str([f"{ky}: {tr:.2f}°C" for ky, tr in translevels.items()]))
     abe.group = dset['title']
-    labes.append(abe)
+    aggreg_bes.append(abe)
 
-    return labes
 
-def aggreg(lbes, hazls: np.array, ax=None, iis=0, dset=None, exprisk=False, emb_figs=None):
+def aggreg(lbes, hazls: np.array, ax=None, idset=0, dset=None, exprisk=False, emb_figs=None):
     """
-    :param lbes:
-    :param hazls:
-    :param exprisk: Whether to use an exponential risk index (2**<received index>)
-    :return:
+    :param lbes: list of burning embers
+    :param hazls: list of hazard levels for which to calculate aggregated values
+    :param exprisk: whether to use an exponential risk index (2**<received index>)
+    :return: p10, median, p90, average
     """
 
     risk_tots = np.zeros(len(hazls))
@@ -165,7 +157,7 @@ def aggreg(lbes, hazls: np.array, ax=None, iis=0, dset=None, exprisk=False, emb_
             # print(f"{source} > {be}")  # For testing: chapter name > ember name
             be.ext['weight'] = 1.0 / (sources_list.count(source))
             if source != new_source_print:
-                print(f"{source} > weight of embers: { be.ext['weight']:5.2f}")  # For testing: chapter name > ember name
+                print(f"{source} > weight of embers: {be.ext['weight']:5.2f}")  # For testing: chapter name > ember name
                 new_source_print = source
             print(f"   Ember: {be}")
     else:
@@ -175,9 +167,9 @@ def aggreg(lbes, hazls: np.array, ax=None, iis=0, dset=None, exprisk=False, emb_
     for lev, hazl in enumerate(hazls):
         risk_hazl = []
         weights = []
-        names=[]
+        names = []
         for be in lbes:
-            intrisk = rfn(be, hazl)
+            intrisk = helpers.rfn(be, hazl)
             # Include the data only if we have indications that it was assessed up to that 'hazard' level
             if max(np.max(be.levels_values('hazl')), be.haz_valid[1]) >= hazl:
                 if exprisk:
@@ -191,22 +183,23 @@ def aggreg(lbes, hazls: np.array, ax=None, iis=0, dset=None, exprisk=False, emb_
 
         rmean_std.append(np.std(risk_hazl)/np.sqrt(len(lbes)))
 
-        # https://numpy.org/doc/stable/reference/generated/numpy.percentile.html
-        #risk_p10[lev], risk_p50[lev], risk_p90[lev] = (
-        #    np.percentile(risk_hazl, (10.0, 50.0, 90.0), method='linear'))
         risk_p10[lev], risk_p50[lev], risk_p90[lev] = (
             helpers.weighted_percentile(risk_hazl, (10.0, 50.0, 90.0), weights=weights))
+        # Unweighted alternative
+        # https://numpy.org/doc/stable/reference/generated/numpy.percentile.html
+        # risk_p10[lev], risk_p50[lev], risk_p90[lev] = (
+        #    np.percentile(risk_hazl, (10.0, 50.0, 90.0), method='linear'))
 
         if abs(hazl-3.0) < 0.02:  # At 3°C, print information about what is "in" p10 and p90.
             names_risk = list(zip(names, risk_hazl))
-            names_risk.sort(key= lambda nr: nr[1])
+            names_risk.sort(key=lambda nr: nr[1])
             print(f"Percentiles at 3°C: {risk_p10[lev], risk_p50[lev], risk_p90[lev]}")
             print(f"<= p10: {[namris for namris in names_risk if namris[1] <= risk_p10[lev]]}")
             print(f"Of which "
-              f"{len([1 for namris in names_risk if namris[1] == risk_p10[lev]])} embers strictly at p10")
+                  f"{len([1 for namris in names_risk if namris[1] == risk_p10[lev]])} embers strictly at p10")
             print(f">= p90: {[namris for namris in names_risk if namris[1] >= risk_p90[lev]]}")
             print(f"Of which "
-              f"{len([1 for namris in names_risk if namris[1] == risk_p90[lev]])} embers strictly at p90")
+                  f"{len([1 for namris in names_risk if namris[1] == risk_p90[lev]])} embers strictly at p90")
 
         if exprisk:
             risk_avgs[lev] = np.log2(risk_tots[lev] / np.sum(weights))
@@ -217,11 +210,10 @@ def aggreg(lbes, hazls: np.array, ax=None, iis=0, dset=None, exprisk=False, emb_
             nemb = len(risk_hazl)
             print(f"At {hazl}°C, the number of available embers is: {nemb}")
             if ax:
-                ax.text(hazl, 3.38 - iis/9, f"n={nemb}", color=dset['style'][0],
+                ax.text(hazl, 3.38 - idset / 9, f"n={nemb}", color=dset['style'][0],
                         fontsize=8, horizontalalignment='left')
-                ax.text(0.2, 2.8 - iis/6, f"{dset['name']}", color=dset['style'][0],
+                ax.text(0.2, 2.8 - idset / 6, f"{dset['name']}", color=dset['style'][0],
                         fontsize=9, horizontalalignment='left')
-
 
     print(f"Standard deviation of the mean value of risk levels: {np.mean(rmean_std):.4f}; "
           f"max: {np.max(rmean_std):.4f}")
@@ -233,29 +225,6 @@ def aggreg(lbes, hazls: np.array, ax=None, iis=0, dset=None, exprisk=False, emb_
 
     return risk_p10, risk_p50, risk_p90, risk_avgs
 
-def rfn(be, hazl):
-    be.egr = egr
-    try:
-        return np.interp(hazl, be.levels_values('hazl'), be.levels_values('risk'))
-    except ValueError:
-        raise ValueError(f"Risk could not be interpolated for the given hazard level (rfn) '{be.name}'; "
-                         f"n levels: {len(be.levels_values('hazl'))}")
-
-def hfn(be, rlev):
-    be.egr = egr
-    return np.interp(rlev, be.levels_values('risk'), be.levels_values('hazl'))
-
-def rem_incomplete(lbes, mxhaz):
-    newlbes = []
-    for be in lbes:
-        if max(np.max(be.levels_values('hazl')), be.haz_valid[1]) < mxhaz:
-            logger.addwarn(
-                f"Removed ember {be} / no assessment for GMT > "
-                f"{max(np.max(be.levels_values('hazl')), be.haz_valid[1])}")
-        else:
-            newlbes.append(be)
-    logger.addwarn(f"#remaining embers: {len(lbes)}")
-    return newlbes
 
 if __name__ == '__main__':
     exit(main())

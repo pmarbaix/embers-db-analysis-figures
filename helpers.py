@@ -1,9 +1,9 @@
 from sys import exc_info
 from typing import Iterator
-
 import json
 import numpy as np
 import requests
+from embermaker.embergraph import EmberGraph
 from embermaker.readembers import embers_from_json
 from embermaker.helpers import Logger
 from settings_datasets_configs import paper_settings
@@ -11,8 +11,13 @@ import matplotlib.pyplot as plt
 from matplotlib import colors
 import logging
 from bisect import bisect_right
-from settings_general import API_URL, TOKEN
+from settings_data_access import API_URL, TOKEN
 import sys
+
+# Create a dumb ember graph because this provides access to the risk level index (e.g. for interpolation);
+# (the origin of this is that risk names, indexes, and colours are defined at the graph level in EmberMaker;
+#  this may change in a future version of EmberMaker, if it gets a specific management of risk level definitions)
+egr = EmberGraph()
 
 def weighted_percentile(values, p, weights=None):
     """ Weighted percentiles,
@@ -84,22 +89,23 @@ class DSets:
     """
     def __init__(self, settings):
         self.settings = settings
-        self.iset = 0
+        self.idset = 0
         self.ndsets = len(settings['multi']) if 'multi' in settings else 1
 
     def __iter__(self) -> Iterator[dict]:
         return self
 
     def __next__(self) -> dict:
-        if self.iset >= self.ndsets:
+        if self.idset >= self.ndsets:
             raise StopIteration
         if 'multi' in self.settings:
-            curmult = self.settings['multi'][self.iset]
+            curmult = self.settings['multi'][self.idset]
             dset = dict(self.settings, **curmult)
             dset.pop('multi', None)
         else:
             dset = self.settings
         dset['ndsets'] = self.ndsets
+        dset['idset'] = self.idset
         styles = [('black', '-'), ('blue', '-'), ('green', '-'),
                   ('black', '--'), ('blue', '--'), ('green', '--')]  # Default line styles
         setdefaults(dset,
@@ -107,8 +113,8 @@ class DSets:
                      'ids': '',
                      'keywords': '',
                      'scenario': '',
-                     'style': styles[self.iset] if self.iset < 6 else styles[0]})
-        self.iset +=1
+                     'style': styles[self.idset] if self.idset < 6 else styles[0]})
+        self.idset +=1
         return dset
 
 def setdefaults(idict, defs):
@@ -124,6 +130,12 @@ def setdefaults(idict, defs):
             idict[ky] = df
 
 def getdata(dset):
+    """
+    Gets data from server or file, as indicated in settings_data_access.py
+    :param dset: the settings defining which data to retrieve, and how to process it for this a datat subset (dset),
+                 as defined in settings_datasets_configs.py
+    :return: a dict containing data.
+    """
 
     response = requests.get(f"{API_URL}/edb/api/combined_data"
                             f"?select_embers={dset['ids']}"
@@ -173,6 +185,7 @@ def extractdata(response, conv_gmt: str = 'compulsory', dump = False):
     # Convert hazard metric to GMT if possible, otherwise remove the ember
     if 'never' not in conv_gmt.lower():
         for be in lbes.copy():
+            be.egr = egr  # Gives ember access to the risk level indexes, for interpolation etc.
             try:
                 be.convert_haz('GMT', logger=logger)
             except LookupError:
@@ -238,6 +251,7 @@ class Emberdata:
     def get_embers_figures(self):
         return self.data['embers_figures']
 
+
 def dict_by_id(dicts, id=None):
     """
     Gets a dict from a list of dict where dict['id'] = id
@@ -250,6 +264,7 @@ def dict_by_id(dicts, id=None):
     else:
         return None
 
+
 def rfn(be, hazl, conf=False):
     """
     Interpolates between levels in a BE to get risk as a function of hazard;
@@ -260,7 +275,12 @@ def rfn(be, hazl, conf=False):
     :return: risk
     """
 
-    risk =  np.interp(hazl, be.levels_values('hazl'), be.levels_values('risk'))
+    try:
+        risk = np.interp(hazl, be.levels_values('hazl'), be.levels_values('risk'))
+    except ValueError:
+        raise ValueError(f"Risk could not be interpolated for the given hazard level (rfn) '{be.name}'; "
+                         f"n levels: {len(be.levels_values('hazl'))}")
+
     if not conf:
         return risk
 
@@ -283,7 +303,9 @@ def rfn(be, hazl, conf=False):
 
 
 def hfn(be, rlev):
-    return np.interp(rlev, be.levels_values('risk'), be.levels_values('hazl'), right=3.2)
+    return np.interp(rlev, be.levels_values('risk'), be.levels_values('hazl'))
+    # Note: there was a version of this function with right= 3.2 for testing.
+
 
 def rem_incomplete(lbes, mxhaz):
     newlbes = []

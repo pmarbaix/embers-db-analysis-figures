@@ -7,7 +7,7 @@ import embermaker.helpers as hlp
 import matplotlib.pyplot as plt
 import json
 import helpers
-from settings_general import API_URL, TOKEN
+from settings_data_access import API_URL, TOKEN
 logger = hlp.Logger()
 
 try:

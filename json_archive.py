@@ -4,7 +4,7 @@ Usage : python json_archive.py <settings name in settings_datasets_configs.py> [
 import sys
 import requests
 import helpers
-from settings_general import API_URL, TOKEN
+from settings_data_access import API_URL, TOKEN
 
 
 # Get settings from settings_datasets_configs.py

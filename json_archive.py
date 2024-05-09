@@ -1,5 +1,5 @@
 """
-Usage : python json_archive.py <settings name in settings_datasets_configs.py> [<optional graph type>]
+Usage : python json_archive.py <settings name in settings_configs.py> [<optional graph type>]
 """
 import sys
 import requests
@@ -7,10 +7,10 @@ import helpers
 from settings_data_access import API_URL, TOKEN
 
 
-# Get settings from settings_datasets_configs.py
+# Get settings from settings_configs.py
 settings = helpers.getsettings(sys.argv)
 
-# Loop over data subsets (defined in settings_datasets_configs.py)
+# Loop over data subsets (defined in settings_configs.py)
 # ---------------------------------------------------------
 nsets = helpers.nsets(settings)
 for iis in range(nsets):

@@ -6,7 +6,6 @@ import requests
 from embermaker.embergraph import EmberGraph
 from embermaker.readembers import embers_from_json
 from embermaker.helpers import Logger
-from settings_datasets_configs import paper_settings
 import matplotlib.pyplot as plt
 from matplotlib import colors
 import logging
@@ -52,35 +51,6 @@ def savejson(file, data):
     with open(file, "w", encoding='utf8') as outfile:
        outfile.write(received_json)
 
-def getsettings(settings_choice:str = None, options:list = None):
-    """
-    Get settings from edb_paper_settings, selecting a configuration from python call args or CLI.
-    :param settings_choice: the name of the settings choice within edb_paper_settings
-    :param options: additional options
-    """
-    if settings_choice:
-        # Launch from python call (argv mimics the previously used CLI's argv to use the same code after this)
-        argv = [sys.argv[0]] + [settings_choice] + list(options)
-    else:
-        # Direct launch from CLI
-        argv = sys.argv
-
-    try:
-        config_choice = argv[1]
-    except IndexError:
-        logging.critical(f"This script needs a configuration choice as argument - none was provided.")
-        exit()
-
-    try:
-        settings = paper_settings(argv)
-        logging.info(settings)
-    except KeyError:
-        logging.critical(
-            f"Configuration not found in edb_paper_settings.py for '{config_choice}' does not exist or has error(s)."
-            f"{exc_info()}")
-        exit()
-
-    return settings
 
 class DSets:
     """
@@ -133,7 +103,7 @@ def getdata(dset):
     """
     Gets data from server or file, as indicated in settings_data_access.py
     :param dset: the settings defining which data to retrieve, and how to process it for this a datat subset (dset),
-                 as defined in settings_datasets_configs.py
+                 as defined in settings_configs.py
     :return: a dict containing data.
     """
 

@@ -1,6 +1,3 @@
-"""
-Usage : python edb_paper_xy.py <settings name in settings_configs.py> [<optional graph type>]
-"""
 import numpy as np
 import matplotlib.pyplot as plt
 import helpers

@@ -9,24 +9,30 @@ it is the basis for graphs showing for example the mean for each subset.
 the value of each item in this list is a dict using the same keywords as the parameters defined outside 'multi'
 (e.g. source (= report), title of the graphic...). Keywords outside 'multi' apply to all data subsets.
 """
-import copy
+from copy import deepcopy
+import inspect
 
-def get_settings(settings_choice:str = None, type=None, subtype=None, wchapter=False):
+def get_settings(settings_choice:str = None, options:list = None, title = None):
     """
     Get settings from edb_paper_settings, selecting a configuration from python call args or CLI.
-    :param settings_choice: the name of the desired settingsd
-    :param type: the default type of diagram, used if the settings below do not define a type
-    :param subtype: the default subtype of diagram, used if the settings below do not define a type
-    :param wchapter: wether figure+chapter weighting should be used (False means all embers have the same weight)
+    :param settings_choice: the name of the desired settings
+    :param options: a list of options, added to the returned settings
+      - wchapter: apply figure+chapter weighting (if unset, all embers have the same weight)
+      - mean: whether to calculate mean values
+      - ...
     :returns: selected settings (dict)
     """
+    type = inspect.stack()[1][3]  # The 'type' of diagram is the name of the function calling get_settings
+    options = options if options else []
+    options_str = '-'.join(options) if options else ''
+
     settings = {
         "AR6_WGII": {
             "source": "AR6",
             "title": "AR6 - all",
             "out_file": "AR6_all",
         },
-        "AR6_global_noRFC_regional": {
+        "AR6_global_regional": {
             "multi": [
                 {"source": "AR6-WGII-Chapter2 OR AR6-WGII-Chapter7",
                  "name": "Global"},
@@ -34,7 +40,8 @@ def get_settings(settings_choice:str = None, type=None, subtype=None, wchapter=F
                            " OR AR6-WGII-CCP4 OR AR6-WGII-CCP6",
                  "name": "Regional"}
             ],
-            "title": "AR6 - compare regional (blue) to blobal (black, without RFCs)",
+            "scenario": "NOT 'high adaptation'",
+            "title": "AR6 - regional vs global (without high adapt.)",
             "out_file": "AR6_glob_noRFC_reg",
         },
         "SRs+AR6_global_regional": {
@@ -46,43 +53,19 @@ def get_settings(settings_choice:str = None, type=None, subtype=None, wchapter=F
                       ],
             "keywords": "!RFC",
             "scenario": "NOT 'high adaptation'",
-            "title": f"SR1.5/SRCCL/SROCC/AR6: global (w/o RFCs) / regional (blue) "
-                     f"{type if type == 'exprisk' else ''}",
-            "out_file": f"SRs+AR6_glob_noRFCnoHighAdapt{type}_{subtype}",
-            "exprisk": type == "exprisk"
-        },
-        "SRs+AR6_global_regional_cumu": {
-            "multi": [{"source": "AR6-WGII-Chapter2 OR AR6-WGII-Chapter7 OR SRCCL OR SR1.5-Chapter3 OR SROCC",
-                       "name": "Global"},
-                      {"source": "AR6-WGII-Chapter9 OR AR6-WGII-Chapter11 OR AR6-WGII-Chapter13 OR AR6-WGII-Chapter14"
-                                 " OR AR6-WGII-CCP4 OR AR6-WGII-CCP6",
-                       "name": "Regional"}
-                      ],
-            "keywords": "!RFC",
-            "title": "SR1.5/SRCCL/SROCC/AR6: compare global (w/o RFCs) to regional (dashes)",
-            "out_file": "SRs+AR6_glob_noRFC_reg_cumu",
-            "type": "cumulative"
-        },
-        "SRs+AR6_G_noRFC": {
-            "source": "AR6-WGII-Chapter2 OR AR6-WGII-Chapter7 OR SRCCL OR SR1.5-Chapter3 OR SROCC",
-            "keywords": "!RFC",
-            "title": "SR1.5/SRCCL/SROCC/AR6: global (w/o RFCs)",
-            "out_file": f"SRs+AR6_glob_noRFC{type}",
-        },
-        "SRs+AR6noRFC_noinc": {
-            "source": "AR6-WGII-Chapter2 OR AR6-WGII-Chapter7 OR SRCCL OR SR1.5-Chapter3 OR SROCC"
-                      "AR6-WGII-Chapter9 OR AR6-WGII-Chapter11 OR AR6-WGII-Chapter13 OR AR6-WGII-Chapter14"
-                      " OR AR6-WGII-CCP4 OR AR6-WGII-CCP6",
-            "keywords": "!RFC",
-            "title": "SR1.5/SRCCL/SROCC/AR6: all w complete data (w/o RFCs)",
-            "remove_incomplete": True
+            "title": f"SR1.5/SRCCL/SROCC/AR6: global vs regional (without high adapt.)",
+            "out_file": f"SRs+AR6_glob_noRFCnoHighAdapt",
         },
         "SRs+AR6noRFC": {
-            "source": "AR6-WGII-Chapter2 OR AR6-WGII-Chapter7 OR SRCCL OR SR1.5-Chapter3 OR SROCC"
-                      "AR6-WGII-Chapter9 OR AR6-WGII-Chapter11 OR AR6-WGII-Chapter13 OR AR6-WGII-Chapter14"
-                      " OR AR6-WGII-CCP4 OR AR6-WGII-CCP6",
-            "keywords": "!RFC",
+            "source": " SR1.5-Chapter3 OR SRCCL OR SROCC OR AR6-WGII-Chapter2 OR AR6-WGII",
+            "keywords": "NOT RFC",
             "title": "SR1.5/SRCCL/SROCC/AR6: all (w/o RFCs)",
+        },
+        "SRs+AR6noRFCnoHighAdapt": {
+            "source": " SR1.5-Chapter3 OR SRCCL OR SROCC OR AR6-WGII-Chapter2 OR AR6-WGII",
+            "keywords": "NOT RFC",
+            "scenario": "NOT 'high adaptation'",
+            "title": "SR1.5/SRCCL/SROCC/AR6: all (w/o RFCs & high adapt.)",
         },
         "compare_regional": {
             "multi": [{"source": "AR6-WGII-Chapter9",
@@ -103,9 +86,7 @@ def get_settings(settings_choice:str = None, type=None, subtype=None, wchapter=F
             "out_file": f"compare_regional_{type}",
         },
         "ecosystems_low-adapt_high-adapt": {
-            "source": "AR6-WGII-Chapter2 OR AR6-WGII-Chapter7 OR SRCCL OR SR1.5-Chapter3 OR SROCC"
-                      " OR AR6-WGII-Chapter9 OR AR6-WGII-Chapter11 OR AR6-WGII-Chapter13 OR AR6-WGII-Chapter14"
-                      " OR AR6-WGII-CCP4 OR AR6-WGII-CCP6",
+            "source": " SR1.5-Chapter3 OR SRCCL OR SROCC OR AR6-WGII-Chapter2 OR AR6-WGII",
             "multi": [{"name": "Ecosystems",
                        "keywords": "'ecosystems' AND NOT 'ecosystem services' AND NOT 'RFC'",
                        "style": ('#084', '-')},
@@ -118,8 +99,8 @@ def get_settings(settings_choice:str = None, type=None, subtype=None, wchapter=F
                        "scenario": "'high adaptation'",
                        "style": ('#02C', '-')},
                       ],
-            "title": f"Ecosystems / others, exc. high adaptation / high adaptation {subtype}",
-            "out_file": f"compare_eco-human-sys{subtype}",
+            "title": f"Ecosystems / others, exc. high adaptation / high adaptation {options_str}",
+            "out_file": f"compare_eco-human-sys",
         },
         "histogram": {
             "source": ["AR6-WGII-Chapter9 OR AR6-WGII-Chapter11 OR AR6-WGII-Chapter13 OR AR6-WGII-Chapter14"
@@ -186,33 +167,31 @@ def get_settings(settings_choice:str = None, type=None, subtype=None, wchapter=F
                        "style": ('black', '-')},
                       ],
             # "no-gmt-conv": True,
-            "title": f"Compare SRs to AR6 {subtype}",
-            "out_file": f"Compare SRs to AR6{subtype}",
+            "title": f"Compare SRs to AR6 {options_str}",
+            "out_file": f"Compare SRs to AR6",
         },
     }
 
     # Add variants based on the above ones
-    settings["overview_reg_3.5"] = copy.deepcopy(settings["overview_reg"])
+    settings["overview_reg_3.5"] = deepcopy(settings["overview_reg"])
     settings["overview_reg_3.5"]["GMT"] = [1.5, 2.5, 3.5]
     settings["overview_reg_3.5"]["out_file"] = "SRs+AR6_noRFC_overview_reg3.5"
 
     # Get chosen settings
     selected_settings = settings[settings_choice]
 
-    # Default outfile, for easier identification of the settings within f name.
+    # Define outfile for easy identification of the settings within f name.
     if 'out_file' not in selected_settings:
-        selected_settings['out_file'] = settings_choice + '_' + type
+        selected_settings['out_file'] = settings_choice
+    selected_settings['out_file'] += '_' + type + ('_' + options_str) if options_str else ''
 
-    # Default graph type
-    if 'type' not in selected_settings:
-        selected_settings['type'] = type
+    # Title
+    if title:
+        selected_settings['title'] = title
+    elif 'wchapter' in options:
+        selected_settings['title'] = selected_settings['title'] + ' (weight/chapter)'
 
-    # Weighting by chapter option
-    if wchapter:
-        selected_settings['title'] = selected_settings['title'] + ' (weight/chapter)' if 'title' in selected_settings \
-            else 'Weight by chapter'
-        selected_settings['out_file'] += '-wchapter'
-        selected_settings['wchapter'] = 'True'
+    selected_settings['type'] = type
+    selected_settings['options'] = options
 
-    selected_settings['subtype'] = subtype
     return selected_settings

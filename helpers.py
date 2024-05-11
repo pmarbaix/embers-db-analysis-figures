@@ -1,4 +1,3 @@
-from sys import exc_info
 from typing import Iterator
 import json
 import numpy as np
@@ -11,12 +10,13 @@ from matplotlib import colors
 import logging
 from bisect import bisect_right
 from settings_data_access import API_URL, TOKEN
-import sys
+from os import path
 
 # Create a dumb ember graph because this provides access to the risk level index (e.g. for interpolation);
 # (the origin of this is that risk names, indexes, and colours are defined at the graph level in EmberMaker;
 #  this may change in a future version of EmberMaker, if it gets a specific management of risk level definitions)
 egr = EmberGraph()
+
 
 def weighted_percentile(values, p, weights=None):
     """ Weighted percentiles,
@@ -46,10 +46,11 @@ def weighted_percentile(values, p, weights=None):
     wrank /= np.sum(weights)
     return np.interp(percent, wrank, values)
 
+
 def savejson(file, data):
     received_json = json.dumps(data, indent=4, ensure_ascii=False)
     with open(file, "w", encoding='utf8') as outfile:
-       outfile.write(received_json)
+        outfile.write(received_json)
 
 
 class DSets:
@@ -84,8 +85,9 @@ class DSets:
                      'keywords': '',
                      'scenario': '',
                      'style': styles[self.idset] if self.idset < 6 else styles[0]})
-        self.idset +=1
+        self.idset += 1
         return dset
+
 
 def setdefaults(idict, defs):
     """
@@ -99,14 +101,14 @@ def setdefaults(idict, defs):
         if ky not in idict:
             idict[ky] = df
 
+
 def getdata(dset):
     """
-    Gets data from server or file, as indicated in settings_data_access.py
+    Gets data from server [or file: not implemented so far], as indicated in settings_data_access.py
     :param dset: the settings defining which data to retrieve, and how to process it for this a datat subset (dset),
                  as defined in settings_configs.py
     :return: a dict containing data.
     """
-
     response = requests.get(f"{API_URL}/edb/api/combined_data"
                             f"?select_embers={dset['ids']}"
                             f"&keywords={dset['keywords']}"
@@ -114,17 +116,25 @@ def getdata(dset):
                             f"&source={dset['source']}",
                             headers={"Authorization": f"Token {TOKEN}"})
 
+    report.write("Embers selection:", title=2)
+    for crit in ['ids', 'source', 'keywords', 'scenario']:
+        if dset[crit]:
+            report.write(f"{crit.capitalize()}: {dset[crit]}")
+    report.write(f"Data obtained from: {API_URL}")
+
     # As a rule, the hazard variable will be converted to GMT.
     conv_gmt = dset["conv_gmt"] if "conv_gmt" in dset else "compulsory"
     # Extract ember data and convert to Ember objects from Embermaker
-    return extractdata(response, dump=False, conv_gmt = conv_gmt)
+    return extractdata(response, dump=False, conv_gmt=conv_gmt)
 
-def extractdata(response, conv_gmt: str = 'compulsory', dump = False):
+
+def extractdata(response, conv_gmt: str = 'compulsory', dump=False):
     """
     Processes the burning embers received from the database API to get 'EmberMaker' drawable embers, +a link to figures
     :param response:
     :param conv_gmt: Whether the hazard unit should be converted to GMT;
                       must be in ['compulsory', 'if_possible', 'never']
+    :param dump: Whether to save all data in a new json file
     :return:
     """
     if conv_gmt not in ['compulsory', 'if_possible', 'never']:
@@ -139,6 +149,7 @@ def extractdata(response, conv_gmt: str = 'compulsory', dump = False):
 
     if "error" in data:
         raise Exception(data["error"])
+    report.write(f"Data extraction date: {data['extraction_date']}")
 
     # Optionally save the data
     if dump:
@@ -146,7 +157,7 @@ def extractdata(response, conv_gmt: str = 'compulsory', dump = False):
 
     # Convert the json ember data to Ember objects
     lbes = embers_from_json(data['embers'])
-    print(f"Getdata: Received {len(lbes)} ember(s).")
+    print(f"ExtractData: Received {len(lbes)} ember(s).")
 
     # Get information about related figures
     emb_figs = data['embers_figures']
@@ -161,17 +172,18 @@ def extractdata(response, conv_gmt: str = 'compulsory', dump = False):
             except LookupError:
                 if 'compulsory' in conv_gmt.lower():
                     lbes.remove(be)
-                    print(f"Removed ember {be} because hazard variable is {be.haz_name_std}")
+                    report.write(f"Removed ember '{be}' because hazard variable is {be.haz_name_std}")
 
-        print(f"Getdata: Unit conversion log (if any): {logger.getlog(0)}")
-        print(f"Getdata: Retained {len(lbes)} ember(s) after conversion to GMT.")
-    else:
-        print(f"Getdata: Did not perform conversion to GMT")
+        conv_log = logger.getlog(0)
+        if conv_log:
+            report.write(f"Unit conversion log:\n {'<br> '.join(conv_log)}")
+    print(f"ExtractData: Retained {len(lbes)} ember(s) after conversion to GMT.")
 
     figures = data['figures']
     return {'lbes': lbes, 'emb_figs': emb_figs, 'figures': figures, 'scenarios': data['scenarios']}
 
-def embers_col_background(xlim: tuple[float, float] = None, ylim: tuple[float, float] = None, dir = 'vertic'):
+
+def embers_col_background(xlim: tuple[float, float] = None, ylim: tuple[float, float] = None, dir='vertic'):
     """
     Draws a light-coloured gradient following the ember risk level colours.
     This
@@ -180,11 +192,11 @@ def embers_col_background(xlim: tuple[float, float] = None, ylim: tuple[float, f
     :param dir: 'vertic' (default) or 'horiz'
     :return:
     """
-    if xlim == None:
+    if xlim is None:
         logging.critical("xlim is required")
         return
-    if ylim == None:
-        ylim = (-1.5,4.5)
+    if ylim is None:
+        ylim = (-1.5, 4.5)
 
     # Set array to map colours to, according to direction
     if dir == 'vertic':
@@ -193,15 +205,15 @@ def embers_col_background(xlim: tuple[float, float] = None, ylim: tuple[float, f
         basarr = np.array(((0., 1.), (0., 1.)))
 
     cols = np.array([(1, 1, 1), (0.98, 0.92, 0), (1, 0.2, 0), (0.5, 0, 0.3)])
-    cols = 2/3.0 + cols / 3.0 # Soften colors
+    cols = 2/3.0 + cols / 3.0  # Soften colors
     cmap = colors.LinearSegmentedColormap.from_list('embers', cols, N=255)
     plt.imshow(basarr,
-               extent=(*xlim, *ylim),
+               extent=(xlim[0], xlim[1], ylim[0], ylim[1]),
                cmap=cmap,
                interpolation='bilinear',
                vmin=0, vmax=1.0,
                aspect='auto'
-            )
+               )
 
 
 class Emberdata:
@@ -242,6 +254,7 @@ def rfn(be, hazl, conf=False):
     (confidence of the transition if hazl is in a transition, otherwise lowest confidence of the 2 nearest transitions)
     :param be:
     :param hazl: the hazard value to interpolate to
+    :param conf: whether to return the confidence level
     :return: risk
     """
 
@@ -259,7 +272,7 @@ def rfn(be, hazl, conf=False):
     idx1 = min(idx1, len(lvs) - 1)
     idx0 = max(idx1 - 1, 0)
     if lvs[idx0] == hazl:
-       idx1 = idx0
+        idx1 = idx0
     try:
         cf0 = lvs[idx0].trans.confidence[0]
         cf1 = lvs[idx1].trans.confidence[0]
@@ -269,7 +282,7 @@ def rfn(be, hazl, conf=False):
         cid = min(cid0, cid1)
     except IndexError:
         cid = -1
-    return risk, cid # Between 0 and 6, min
+    return risk, cid  # Between 0 and 6, min
 
 
 def hfn(be, rlev):
@@ -290,7 +303,7 @@ def rem_incomplete(lbes, mxhaz):
     return newlbes
 
 
-def get_skey_kw(keywords: list, limit:int = None):
+def get_skey_kw(keywords: list, limit: int = None):
     """
     Generates a sort key function for sorting objects (in principle, embers) by up to
     2 keywords within a list of keywords.
@@ -324,6 +337,7 @@ def get_skey_kw(keywords: list, limit:int = None):
 
     return skey_kw
 
+
 def get_skey_longname(regions: list):
     """
     Generates a sort key function for sorting by keywords within a list of keywords
@@ -332,7 +346,7 @@ def get_skey_longname(regions: list):
     """
     def skey(be):
         # We need to look for region names 'word by word' because 'arctic' is contained in 'antarctic' :-)
-        bekws = [bekw.strip() for bekw in be.longname.lower().replace(':','').split(' ')]
+        bekws = [bekw.strip() for bekw in be.longname.lower().replace(':', '').split(' ')]
         fkw = [kw for kw in regions if kw.lower().strip() in bekws]
 
         if len(fkw) >= 1:
@@ -341,3 +355,54 @@ def get_skey_longname(regions: list):
             return -1
 
     return skey
+
+
+class Report:
+    """
+    Helps in generating processing reports in Markdown format
+    """
+    def __init__(self, filename):
+        if filename:
+            if path.splitext(filename)[1] != 'md':
+                filename = filename + '.md'
+            self.file = open(filename, 'w')
+        else:
+            self.file = None
+
+    def write(self, txt: str, title: int = 0):
+        """
+        :param txt: the text to write
+        :param title: the level of title / subtitle
+        """
+        if title and title < 5:
+            prefix = "#" * title + " "
+        else:
+            prefix = ""
+        if self.file:
+            self.file.write(f"\n{prefix}{txt}\n")
+
+    def table_head(self, headers: list):
+        if self.file:
+            self.file.write(f'\n| {" | ".join(headers)}\n')
+            self.file.write(f'| {" --- | " * len(headers)}\n')
+
+    def table_write(self, content: list):
+        if self.file:
+            self.file.write(f'| {" | ".join([str(c) for c in content])}\n')
+
+    def embers_list(self, lbes):
+        self.write(f'Ember names and ids (n={len(lbes)}):', title=2)
+        self.write('<br>'.join([be.longname + " (" + str(be.id) + ")" for be in lbes]))
+
+    def close(self):
+        if self.file:
+            self.file.close()
+
+
+def report_start(settings):
+    global report
+    report = Report(f"out/{settings['out_file']}")
+    report.write(f"{settings['title'].replace('\n', ' ')}", title=1)
+
+# We use only one "global" report, which is easy to refer to, by importing helpers
+report = Report(None)

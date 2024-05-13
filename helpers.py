@@ -102,6 +102,18 @@ def setdefaults(idict, defs):
             idict[ky] = df
 
 
+def request_param_str(dset, param: str):
+    if param in dset:
+        if request_param_str.first:
+            prefix = '?'
+            request_param_str.first = False
+        else:
+            prefix = '&'
+        return prefix + f"{param}={dset[param]}"
+    else:
+        return ""
+
+
 def getdata(dset):
     """
     Gets data from server [or file: not implemented so far], as indicated in settings_data_access.py
@@ -109,16 +121,19 @@ def getdata(dset):
                  as defined in settings_configs.py
     :return: a dict containing data.
     """
+    request_param_str.first = True
     response = requests.get(f"{API_URL}/edb/api/combined_data"
-                            f"?select_embers={dset['ids']}"
-                            f"&keywords={dset['keywords']}"
-                            f"&scenario={dset['scenario']}"
-                            f"&source={dset['source']}",
+                            + request_param_str(dset, 'emberids')
+                            + request_param_str(dset, 'source')
+                            + request_param_str(dset, 'keywords')
+                            + request_param_str(dset, 'scenario')
+                            + request_param_str(dset, 'longname')
+                            + request_param_str(dset, 'inclusion'),
                             headers={"Authorization": f"Token {TOKEN}"})
 
     report.write("Embers selection:", title=2)
-    for crit in ['ids', 'source', 'keywords', 'scenario']:
-        if dset[crit]:
+    for crit in ['emberids', 'source', 'keywords', 'scenario', 'longname']:
+        if crit in dset and dset[crit]:
             report.write(f"{crit.capitalize()}: {dset[crit]}")
     report.write(f"Data obtained from: {API_URL}")
 
@@ -236,7 +251,7 @@ class Emberdata:
 
 def dict_by_id(dicts, id=None):
     """
-    Gets a dict from a list of dict where dict['id'] = id
+    Gets a dict from a list of dicts such that dict['id'] = id.
     :param dicts: a list of dict objects
     :param id: the required id
     :return: the corresponding dict
@@ -362,9 +377,9 @@ class Report:
     Helps in generating processing reports in Markdown format
     """
     def __init__(self, filename):
+        self.nembers = 0
         if filename:
-            if path.splitext(filename)[1] != 'md':
-                filename = filename + '.md'
+            filename = path.splitext(filename)[0] + '.md'
             self.file = open(filename, 'w')
         else:
             self.file = None
@@ -390,11 +405,18 @@ class Report:
         if self.file:
             self.file.write(f'| {" | ".join([str(c) for c in content])}\n')
 
-    def embers_list(self, lbes):
-        self.write(f'Ember names and ids (n={len(lbes)}):', title=2)
-        self.write('<br>'.join([be.longname + " (" + str(be.id) + ")" for be in lbes]))
+    def embers_list(self, lbes, onlyids=False):
+        self.nembers += len(lbes)
+        if onlyids:
+            self.write(f'Ember ids (n={len(lbes)}):', title=3)
+            self.write(', '.join([str(be.id) for be in lbes]))
+        else:
+            self.write(f'Ember names and ids (n={len(lbes)}):', title=3)
+            self.write('<br>'.join([be.longname + " (" + str(be.id) + ")" for be in lbes]))
 
-    def close(self):
+    def close(self, total=True):
+        if total:
+            self.write(f'Total number of embers listed in this report: {self.nembers}', title=3)
         if self.file:
             self.file.close()
 
@@ -403,6 +425,7 @@ def report_start(settings):
     global report
     report = Report(f"out/{settings['out_file']}")
     report.write(f"{settings['title'].replace('\n', ' ')}", title=1)
+
 
 # We use only one "global" report, which is easy to refer to, by importing helpers
 report = Report(None)

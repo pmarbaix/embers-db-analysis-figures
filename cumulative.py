@@ -18,6 +18,7 @@ def cumulative(**kwargs):
     # Create plot
     fig, ax = plt.subplots()
 
+    # Loop over data subsets (defined in the settings)
     for dset in hlp.DSets(settings):
         if dset["ndsets"] > 1:
             hlp.report.write(f"Source {dset["idset"]}: {dset['name']}", title=1)

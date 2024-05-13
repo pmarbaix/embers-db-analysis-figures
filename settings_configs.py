@@ -27,11 +27,21 @@ def get_settings(settings_choice:str = None, options:list = None, title = None):
     options_str = '-'.join(options) if options else ''
 
     settings = {
-        "AR6_WGII": {
-            "source": "AR6",
+        "AR6-WGII": {
+            "source": "AR6-WGII",
             "title": "AR6 - all",
             "out_file": "AR6_all",
         },
+        "All": {
+            "title": "All embers (except for those excluded from all processing)",
+            "out_file": "All",
+        },
+        "Full": {
+            "inclusion": -3,
+            "title": "All embers - including those not included in figures (!)",
+            "out_file": "All-with_excl",
+        },
+
         "AR6_global_regional": {
             "multi": [
                 {"source": "AR6-WGII-Chapter2 OR AR6-WGII-Chapter7",
@@ -110,7 +120,7 @@ def get_settings(settings_choice:str = None, options:list = None, title = None):
             "out_file": "histo",
         },
 
-        "overview_glob": {
+        "overview_systems": {
             "multi": [
                 {"source": "AR6-WGII-Chapter2 OR AR6-WGII-Chapter7 OR SRCCL OR SR1.5-Chapter3 OR SROCC",
                  "keywords": "ecosystems AND !RFC AND !'ecosystem services' AND !'human' AND !'ocean' AND !'coast'",
@@ -122,18 +132,18 @@ def get_settings(settings_choice:str = None, options:list = None, title = None):
                  "color": (0, 0, 0.8)},
                 {"source": "AR6-WGII-Chapter2 OR AR6-WGII-Chapter7 OR SRCCL OR SR1.5-Chapter3 OR SROCC",
                  "keywords": "(!ecosystems OR 'ecosystem services' OR 'human') AND !RFC",
+                 "longname": "NOT 'Arctic:' AND NOT 'permafrost degradation'",
                  "name": "\nHuman systems\nand ecosystem services",
                  "color": (0.8, 0.0, 0.1)},
             ],
             "sort_keywords": ['health', 'food', 'ecosystem services', 'land', 'forests', 'coast', 'ocean', 'water',
                               'animal', 'sdg', 'tourism', 'permafrost'],
-            "title": "SR1.5/SRCCL/SROCC/AR6 - global",
-            "out_file": "SRs+AR6_noRFC_overview_glob",
-            "type": "overview",
+            "title": "SR1.5/SRCCL/SROCC/AR6 - global/systems",
+            "out_file": "SRs+AR6_noRFC_overview_systems",
             "GMT": [1.5, 2.0, 2.5]
         },
 
-        "overview_reg": {
+        "overview_regions": {
             "multi": [
                 {"source": "AR6-WGII-CCP6", "color": (0.16, 0, 0.87), "name": "Antarctica",
                     "keywords": "Antarctic"},
@@ -143,7 +153,7 @@ def get_settings(settings_choice:str = None, options:list = None, title = None):
                 {"source": "AR6-WGII-Chapter13", "color": (0.92, 0, 0.06), "name": "Europe"},
                 {"source": "AR6-WGII-Chapter14", "color": (0.05, 0.35, 0.05), "name": "North-America"},
                 {"source": "AR6-WGII-CCP6", "color": (0.16, 0, 0.87), "name": "Arctic",
-                    "keywords": "Arctic"},
+                    "keywords": "Arctic", "emberids": '27-42'},
             ],
             "sort_keywords": ['health', 'food', 'land', 'forests', 'coast', 'ocean', 'water', 'tourism'],
             "hide_chapter": True,
@@ -151,7 +161,6 @@ def get_settings(settings_choice:str = None, options:list = None, title = None):
                               'Antarctic:', 'in Australia'],  # Those are words from the names that would be redundant
             "title": "AR6 - regional",
             "out_file": "SRs+AR6_noRFC_overview_reg2.5",
-            "type": "overview",
             "GMT": [1.5, 2.0, 2.5]
         },
         "SRs_vs_AR6":{
@@ -173,7 +182,7 @@ def get_settings(settings_choice:str = None, options:list = None, title = None):
     }
 
     # Add variants based on the above ones
-    settings["overview_reg_3.5"] = deepcopy(settings["overview_reg"])
+    settings["overview_reg_3.5"] = deepcopy(settings["overview_regions"])
     settings["overview_reg_3.5"]["GMT"] = [1.5, 2.5, 3.5]
     settings["overview_reg_3.5"]["out_file"] = "SRs+AR6_noRFC_overview_reg3.5"
 
@@ -183,7 +192,7 @@ def get_settings(settings_choice:str = None, options:list = None, title = None):
     # Define outfile for easy identification of the settings within f name.
     if 'out_file' not in selected_settings:
         selected_settings['out_file'] = settings_choice
-    selected_settings['out_file'] += '_' + type + ('_' + options_str) if options_str else ''
+    selected_settings['out_file'] += '_' + type + (('_' + options_str) if options_str else '')
 
     # Title
     if title:

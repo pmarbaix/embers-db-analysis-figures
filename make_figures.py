@@ -13,9 +13,11 @@ All usages of this script require:
 from sys import exit, argv
 from mean_percentiles import mean_percentiles
 from cumulative import cumulative
+from overview import overview
+from embers_table import embers_table
 
 # Default list of figures to build:
-do_figures = [32]
+do_figures = [9]
 
 def make_figures(figures = None):
     if not figures:
@@ -50,6 +52,17 @@ def make_figures(figures = None):
         mean_percentiles(settings_choice="ecosystems_low-adapt_high-adapt", options=['mean', 'median'],
             title="Figure 5: Ecosystems - others w/o high adapt. - others with high adapt. (AR6+SRs)")
 
+    if 6 in figures:
+        overview(settings_choice="overview_systems",
+            title="Figure 6: Overview - systems")
+
+    if 7 in figures:
+        overview(settings_choice="overview_regions",
+            title="Figure 6: Overview - regional")
+
+    if 9 in figures:
+        embers_table(settings_choice="All",
+            title="Table x")
 
 # Optional start from command-line, with arguments
 # Usage:   python make_figures.py  <function to run> <settings_choice> [<option 1> [<option 2>] ...]

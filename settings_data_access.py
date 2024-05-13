@@ -1,4 +1,4 @@
-source = "remote"
+source = "local"
 
 if source == "local":
     API_URL = "http://localhost:8000"

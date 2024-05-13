@@ -121,6 +121,11 @@ def getdata(dset):
                  as defined in settings_configs.py
     :return: a dict containing data.
     """
+    report.write("Embers selection:", title=2)
+    for crit in ['emberids', 'source', 'keywords', 'scenario', 'longname']:
+        if crit in dset and dset[crit]:
+            report.write(f"{crit.capitalize()}: {dset[crit]}")
+
     request_param_str.first = True
     response = requests.get(f"{API_URL}/edb/api/combined_data"
                             + request_param_str(dset, 'emberids')
@@ -131,11 +136,11 @@ def getdata(dset):
                             + request_param_str(dset, 'inclusion'),
                             headers={"Authorization": f"Token {TOKEN}"})
 
-    report.write("Embers selection:", title=2)
-    for crit in ['emberids', 'source', 'keywords', 'scenario', 'longname']:
-        if crit in dset and dset[crit]:
-            report.write(f"{crit.capitalize()}: {dset[crit]}")
-    report.write(f"Data obtained from: {API_URL}")
+    if response.ok:
+        report.write(f"Data received from: {API_URL}")
+    else:
+        report.write(f"Data request failed ({API_URL})")
+        raise ConnectionError(response.text)
 
     # As a rule, the hazard variable will be converted to GMT.
     conv_gmt = dset["conv_gmt"] if "conv_gmt" in dset else "compulsory"

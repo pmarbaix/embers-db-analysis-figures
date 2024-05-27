@@ -2,7 +2,7 @@
 Usage : python overview.py <settings name in settings_configs.py>
 """
 import matplotlib.pyplot as plt
-import helpers as hlp
+import src.helpers as hlp
 import settings_configs
 import logging
 
@@ -33,7 +33,7 @@ def overview(**kwargs):
 
         # Get data for the current subset (dset)
         data = hlp.getdata(dset)
-        lbes = data['lbes']  # The list of burning embers in this data subset
+        lbes = data['embers']  # The list of burning embers in this data subset
         scenarios = data['scenarios']
         hlp.report.embers_list(lbes, onlyids=True)
 
@@ -58,7 +58,8 @@ def overview(**kwargs):
     ax.set_ylim(0.5, icount + 0.5)
 
     # Background
-    hlp.embers_col_background(xlim=(-1, 4), ylim=ax.get_ylim(), dir='horiz')
+    soften_col = dset['soften_col'] if 'soften_col' in dset else None
+    hlp.embers_col_background(xlim=(-1, 4), ylim=ax.get_ylim(), dir='horiz', soften_col=soften_col)
     hlp.report.write(f"GMT levels shown: {settings['GMT']}")
 
     plt.rcParams['svg.fonttype'] = 'none'
@@ -116,7 +117,7 @@ def riskchart(lbes, dset=None, ax=None, istart=0, data=None):
         gid = be.meta['scenariogroup_id']
         plt.hlines(ebpos, 0, 3, color="#AAA", linewidths=0.3)
         name = ""
-        citekey = hlp.dict_by_id(figures, be.meta['mainfigure_id'])['reference']['cite_key']
+        citekey = hlp.dict_by_id(figures, be.meta['mainfigure_id'])['biblioreference.cite_key']
         convcite = {'AR6': 'A6', 'SR1': '1.5', 'SRO': 'O', 'SRC': 'L'}
         name_sfx = f'[{convcite[citekey[0:3]]}]' if 'hide_chapter' not in dset else ''
         if gid is None:

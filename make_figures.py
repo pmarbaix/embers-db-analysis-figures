@@ -11,58 +11,85 @@ All usages of this script require:
  For more information, see README.md
 """
 from sys import exit, argv
-from mean_percentiles import mean_percentiles
-from cumulative import cumulative
-from overview import overview
-from embers_table import embers_table
+from src.mean_percentiles import mean_percentiles
+from src.cumulative import cumulative
+from src.overview import overview
+from src.embers_table import embers_table
+from src.hazrisk import hazrisk
 
 # Default list of figures to build:
-do_figures = [9]
+do_figures = ['3e']
 
-def make_figures(figures = None):
+
+def make_figures(figures=None):
+    all = False
     if not figures:
         figures = do_figures
     elif figures == 'all':
-        figures = range(100)
+        all = True
     else:
-        figures = [int(figures)]
+        figures = [figures]
 
-    if 31 in figures:
-        mean_percentiles(settings_choice="SRs+AR6_global_regional", options=['mean', 'median'],
-            title="Figure 3(a) and 3(d): Global vs reg. mean & med.(AR6+SRs, excl. high adapt. and RFCs)")
+    if '3a' in figures or all:
+        mean_percentiles(settings_choice="SRs+AR6_global_regional", options=['mean', 'median', 'ember'],
+            title="Figure 3(a)+(d): Global vs reg. mean & med.(AR6+SRs, excl. high adapt. and RFCs)")
 
-    if 32 in figures:
+    if '3b' in figures or all:
         mean_percentiles(settings_choice="SRs+AR6_global_regional", options=['p10-p90'],
             title="Figure 3(b): Global vs regional p10 & p90 (AR6+SRs, excluding high adapt. and RFCs)")
 
-    if 33 in figures:
-        cumulative(settings_choice="SRs+AR6noRFC",
-            title="Figure 3(c): Cumulative distribution of\ntransitions mid-points (AR6+SRs, excl. RFCs)")
-
-    if 34 in figures:
+    if '3c' in figures or all:
         cumulative(settings_choice="SRs+AR6noRFCnoHighAdapt",
             title="Figure 3(c) - alt.: Cumulative distribution of\n"
                   "transitions mid-points (AR6+SRs, excl. RFCs & high adapt.)")
 
-    if 4 in figures:
-        mean_percentiles(settings_choice="SRs+AR6_global_regional", options=['mean', 'median', 'wchapter'],
-            title="Figure 4 - Global vs regional + chapter weighting")
+    if '3c-alt' in figures or all:
+        cumulative(settings_choice="SRs+AR6noRFC",
+            title="Cumulative distribution of\ntransitions mid-points (AR6+SRs, excl. RFCs)")
 
-    if 5 in figures:
-        mean_percentiles(settings_choice="ecosystems_low-adapt_high-adapt", options=['mean', 'median'],
-            title="Figure 5: Ecosystems - others w/o high adapt. - others with high adapt. (AR6+SRs)")
+    if '3e' in figures or all:
+        mean_percentiles(settings_choice="SRs+AR6_global_regional", options=['mean', 'median', 'ember', 'wchapter'],
+            title="Figure 3(e)+(f) - Global vs regional + chapter weighting")
 
-    if 6 in figures:
+    if '4' in figures or all:
+        mean_percentiles(settings_choice="ecosystems_low-adapt_high-adapt", options=['mean', 'median', 'ember'],
+            title="Figure 4(a)+(b): Ecosystems - others w/o high adapt. - others with high adapt. (AR6+SRs)")
+
+    if '4c' in figures or all:
+        mean_percentiles(settings_choice="SRs_vs_AR6-ecosystems", options=['mean', 'median'],
+            title="Figure 4(c): Ecosystems: compare SRs to AR6")
+
+    if '4d' in figures or all:
+        mean_percentiles(settings_choice="SRs_vs_AR6-others-no_high-adapt", options=['mean', 'median'],
+            title="Figure 4(d): Other systems: compare SRs to AR6")
+
+    if '4c-sup' in figures or all:
+        mean_percentiles(settings_choice="ecosystems_low-adapt_high-adapt_AR6", options=['mean', 'median'],
+            title="Figure 4(sup2): compare SRs to AR6 for human systems\n and ecosystem services, no/mod adaptation")
+
+    if '5' in figures or all:
         overview(settings_choice="overview_systems",
-            title="Figure 6: Overview - systems")
+            title="Figure 5: Overview - systems")
 
-    if 7 in figures:
+    if '6' in figures or all:
         overview(settings_choice="overview_regions",
             title="Figure 6: Overview - regional")
 
-    if 9 in figures:
-        embers_table(settings_choice="All",
-            title="Table x")
+    if '6-sup' in figures or all:
+        overview(settings_choice="overview_reg_3.5",
+            title="Figure 6: Overview - regional - 1.5, 2.5, 3.5°C")
+
+    if 'tab' in figures or all:
+        embers_table(settings_choice="All_included",
+            title="Table 2")
+
+    if 'exp' in figures:
+        hazrisk(settings_choice="AR6-RFCs",
+            title="Experimental figure")
+
+
+    print("Job completed! Note that a 'processing report' is provided with each figure (.md = Markdown format).")
+
 
 # Optional start from command-line, with arguments
 # Usage:   python make_figures.py  <function to run> <settings_choice> [<option 1> [<option 2>] ...]
@@ -75,6 +102,6 @@ if __name__ == "__main__":
         exec(cmd)
         exit()
     elif len(argv) == 2:
-        make_figures(figures = argv[1])
+        make_figures(figures=argv[1])
     else:
         make_figures()

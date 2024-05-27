@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import helpers as hlp
+import src.helpers as hlp
 import settings_configs
 
 def cumulative(**kwargs):
@@ -25,7 +25,7 @@ def cumulative(**kwargs):
 
         # Get data for the current subset and the list of burning embers (lbes)
         data = hlp.getdata(dset)
-        lbes = data['lbes']
+        lbes = data['embers']
         hlp.report.embers_list(lbes)
 
         # This diagram is based on the transition mid-points ('median') for each transition.
@@ -79,6 +79,6 @@ def cumulative(**kwargs):
            title=settings["title"])
 
     plt.rcParams['svg.fonttype'] = 'none'
-    fig.savefig(f"out/{settings['out_file']}.svg", format="svg")
+    fig.savefig(f"out/{settings['out_file']}.pdf", format="pdf")
     plt.show()
     hlp.report.close()

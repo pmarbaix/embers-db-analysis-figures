@@ -1,6 +1,6 @@
 import numpy as np
 import embermaker.helpers as embhlp
-import helpers as hlp
+import src.helpers as hlp
 import settings_configs
 import re
 logger = embhlp.Logger()  # Standard log function in EmberMaker
@@ -25,10 +25,10 @@ def embers_table(**kwargs):
     # Get data for the current subset and the list of burning embers (lbes)
     dset["conv_gmt"] = "if_possible"
     data = hlp.getdata(dset)
-    lbes = data['lbes']
+    lbes = data['embers']
     hlp.report.embers_list(lbes)
 
-    emb_figs = data['emb_figs']
+    embers = data['embers']
     figures = data['figures']
     scenarios = data['scenarios']
 
@@ -40,13 +40,13 @@ def embers_table(**kwargs):
         figkeys.append('0')
         figkeys.append('0')
         keylist = [(int(key) if key.isdigit() else key) for key in figkeys]
-        reports = ['TAR-SPM', 'Smith09', 'AR5-WGII-Chapter19', 'AR5-SYR',
+        reports = ['TAR-WGII-Chapter19', 'Smith09', 'AR5-WGII-Chapter19', 'AR5-SYR',
                    'SR1.5-Chapter3', 'SRCCL-Chapter7', 'SRCCL-Chapter7-SM', 'SROCC-Chapter5',
                    'AR6-WGII-Chapter2', 'AR6-WGII-Chapter7', 'AR6-WGII-Chapter9',
                    'AR6-WGII-Chapter11', 'AR6-WGII-Chapter13', 'AR6-WGII-Chapter14', 'AR6-WGII-Chapter16',
                    'AR6-WGII-CCP4', 'AR6-WGII-CCP6',
                    ]
-        reportidx = reports.index(fig['reference']['cite_key'])
+        reportidx = reports.index(fig['biblioreference.cite_key'])
         keylist = [int('RFC' in fig['shortname']), reportidx, keylist[3]]
         return keylist
 
@@ -63,7 +63,7 @@ def embers_table(**kwargs):
 
     # Loop over figures = lines in the summary table
     for fig in figures:
-        be_ids = [ky for ky in emb_figs.keys() if emb_figs[ky]['id'] == fig['id']]
+        be_ids = [be.id for be in embers if  be.meta['mainfigure_id'] == fig['id'] ]
         n_other_adap = 0
         n_high_adap = 0
         c_all = 0
@@ -77,7 +77,7 @@ def embers_table(**kwargs):
             try:
                 be = dbes[beid]
             except KeyError:
-                logger.addwarn(f"Could not find ember! id: {beid} figure: {emb_figs[beid]}")
+                logger.addwarn(f"Could not find ember! id: {beid} figure: {fig}")
                 continue
             c_all += 1
             hr_mid.append(hlp.hfn(be, 1.5))

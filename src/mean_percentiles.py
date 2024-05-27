@@ -1,11 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import helpers as hlp
+import src.helpers as hlp
 import settings_configs
 from embermaker.embergraph import EmberGraph
 from embermaker import ember as emb
 from itertools import groupby
-
+import logging
 
 def mean_percentiles(**kwargs):
     """
@@ -33,7 +33,7 @@ def mean_percentiles(**kwargs):
 
         # Get data for the current subset (dset)
         data = hlp.getdata(dset)
-        lbes = data['lbes']  # The list of burning embers in this data subset
+        lbes = data['embers']  # The list of burning embers in this data subset
 
         # Prepare figure
         ax.set(xlabel='Global mean temperature change (GMT)')
@@ -46,18 +46,19 @@ def mean_percentiles(**kwargs):
             lbes = hlp.rem_incomplete(lbes, hazlevs[-1])
 
         if 'wchapter' in dset['options']:  # Optional 'per chapter' weighting: this will provide the chapter + fig n°
-            emb_figs = data['emb_figs']  # A list of embers providing information on the main figure containing them
+            figures = data['figures']  # A list of embers providing information on the main figure containing them
         else:
-            emb_figs = None
+            figures = None
             # if no weighting, report the list of embers (with weighing, this will be done when weights ar calculated)
             hlp.report.embers_list(lbes)
 
         # Calculate risk percentiles and averages:
         risk_p10, risk_p50, risk_p90, risk_avgs = aggreg(lbes, hazlevs, exprisk=dset.get('exprisk', False),
-                                                         ax=ax, dset=dset, emb_figs=emb_figs)
+                                                         ax=ax, dset=dset, figures=figures)
 
         # Coloured background
-        hlp.embers_col_background(xlim=(float(hazlevs[0]), float(hazlevs[-1])))
+        soften_col = dset['soften_col'] if 'soften_col' in dset else None
+        hlp.embers_col_background(xlim=(float(hazlevs[0]), float(hazlevs[-1])), soften_col=soften_col)
 
         # Plot
         if 'mean' in dset['options']:
@@ -106,10 +107,11 @@ def mean_percentiles(**kwargs):
         aggreg_bes.append(abe)
 
     # Create the aggregated ember graph, if embers were created, and draw
-    if aggreg_bes:
+    if aggreg_bes and 'ember' in settings['options']:
         outfile = 'out/ember_' + settings['out_file']
         agr = EmberGraph(outfile, grformat="PDF")
         agr.gp['haz_axis_top'] = 4.0
+        agr.gp['gr_fnt_size'] = 10
         agr.gp['conf_lines_ends'] = 'bar'  # 'bar', 'arrow', or 'datum' (or None)
         agr.gp['leg_pos'] = 'none'  # No risk levels legend
         agr.add(aggreg_bes)
@@ -117,12 +119,12 @@ def mean_percentiles(**kwargs):
 
     # Finalise the x-y percentile and/or median plots
     plt.rcParams['svg.fonttype'] = 'none'
-    fig.savefig(f"out/{settings['out_file']}.svg", format="svg")
+    fig.savefig(f"out/{settings['out_file']}.pdf", format="pdf")
     plt.show()
     hlp.report.close()
 
 
-def aggreg(lbes, hazlevs: np.array, ax=None, dset=None, exprisk=False, emb_figs=None):
+def aggreg(lbes, hazlevs: np.array, ax=None, dset=None, exprisk=False, figures=None):
     """
     Draws the requested percentiles and/or mean among the set of embers (lbes), for each hazard level in hazls.
     :param lbes: list of burning embers
@@ -130,7 +132,7 @@ def aggreg(lbes, hazlevs: np.array, ax=None, dset=None, exprisk=False, emb_figs=
     :param ax: matplotlib axes
     :param dset: settings for the current data subset
     :param exprisk: whether to use an exponential risk index (2**<received index>)
-    :param emb_figs: Figure and bib source for each ember, for weighting; None => each ember has a weight of 1
+    :param figures: figure list containing data about each figure, for weighting; None => each ember has a weight of 1
     :return: p10, median, p90, average
     """
     risk_tots = np.zeros(len(hazlevs))
@@ -142,7 +144,7 @@ def aggreg(lbes, hazlevs: np.array, ax=None, dset=None, exprisk=False, emb_figs=
     rmean_std = []
     nemb = 0
 
-    if emb_figs:
+    if figures:
         hlp.report.write(f"Weighting per chapter/figure (n total={len(lbes)})", title=2)
         hlp.report.table_head(["Weighting group", "Embers", "Weight"])
         # Calculate weights: 'equal weight per chapter/figure' option
@@ -150,12 +152,13 @@ def aggreg(lbes, hazlevs: np.array, ax=None, dset=None, exprisk=False, emb_figs=
         # Create a dict that will link the id of each ember (the key) to the label of its weighting group:
         be_groups = dict()
         for be in lbes:
-            figinfo: dict = emb_figs[str(be.id)]  # The information about the main figure containing ember be
+            # Get information about the main figure containing ember be:
+            figinfo: dict = hlp.dict_by_id(figures, be.meta['mainfigure_id'])
             # Generate and set the group label for each ember
-            if figinfo['source_key'] in ('SRCCL', 'SR1.5'):  # Exception: split by figure
-                be_groups[be.id] = figinfo['source_key'] + '-' + str(figinfo['number'])
+            if figinfo['biblioreference.cite_key'] in ('SRCCL', 'SR1.5'):  # Exception: split by figure
+                be_groups[be.id] = figinfo['biblioreference.cite_key'] + '-' + str(figinfo['number'])
             else:
-                be_groups[be.id] = figinfo['source_key']
+                be_groups[be.id] = figinfo['biblioreference.cite_key']
 
         groups_list = list(be_groups.values())
         for group_key, be_set in groupby(lbes, lambda be: be_groups[be.id]):

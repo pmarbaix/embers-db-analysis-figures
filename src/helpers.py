@@ -9,8 +9,9 @@ import matplotlib.pyplot as plt
 from matplotlib import colors
 import logging
 from bisect import bisect_right
-from settings_data_access import API_URL, TOKEN
+from settings_data_access import API_URL, TOKEN, FILE
 from os import path
+import re
 
 # Create a dumb ember graph because this provides access to the risk level index (e.g. for interpolation);
 # (the origin of this is that risk names, indexes, and colours are defined at the graph level in EmberMaker;
@@ -45,12 +46,6 @@ def weighted_percentile(values, p, weights=None):
     wrank = np.cumsum(weights) - 0.5 * weights  # (C = 1/2)
     wrank /= np.sum(weights)
     return np.interp(percent, wrank, values)
-
-
-def savejson(file, data):
-    received_json = json.dumps(data, indent=4, ensure_ascii=False)
-    with open(file, "w", encoding='utf8') as outfile:
-        outfile.write(received_json)
 
 
 class DSets:
@@ -103,6 +98,7 @@ def setdefaults(idict, defs):
 
 
 def request_param_str(dset, param: str):
+    """Adds the given parameter, if it is available, to the request parameters (as string)"""
     if param in dset:
         if request_param_str.first:
             prefix = '?'
@@ -114,77 +110,179 @@ def request_param_str(dset, param: str):
         return ""
 
 
-def getdata(dset):
+def jsonfile_save(filename, data):
+    received_json = json.dumps(data, indent=4, ensure_ascii=False)
+    filename = path.splitext(filename)[0] + '.json'
+    with open(filename, "w", encoding='utf8') as outfile:
+        outfile.write(received_json)
+
+
+class Response:
+    def __init__(self, json_data):
+        self.ok = True
+        self.content = json_data
+
+
+def stringmatch(criteria, text):
+    """
+    Returns True if the string matches the given criteria.
+    For example, criteria "fox AND NOT dog" would return False on "The quick brown fox... the lazy dog".
+    Supported are: AND, OR, NOT (upper case), quotes ('') and brackets
+    Example of complex criteria: "ecosystems AND NOT ('ecosystem services' OR fishing OR aquaculture)"
+    :param text: the text to check for matches according to the criteria
+    :param criteria: the search criteria
+    :return:
+    """
+    if not criteria:
+        return True
+    # Parse the criteria to get a list of tuples: [(<string to find>,<operator>), ...]
+    pexp = re.findall(r"(|\b[^']*?\b|\'.*?\') *(\(|\)|\bAND\b|\bOR\b|\bNOT\b|$)", criteria)
+    lstr = ""
+    text = text.lower()
+    for ex in pexp:
+        tx = ex[0].strip().strip("'")
+        if tx:
+            fnd = str (tx.lower() in text) + " "
+        else:
+            fnd = ""
+        lstr += " " + fnd + ex[1].lower()
+    try:
+        return eval(lstr)
+    except SyntaxError:
+        logging.fatal(f"Stringmatch failed to apply '{criteria}' to '{text}'")
+        exit()
+
+
+def jsonfile_get(filename, dset):
+    """
+    Returns the filtered content of a json file according to the criteria in dset
+    :param filename:
+    :param dset:
+    :return:
+    """
+    with open(filename, "r") as file:
+        jsondata = json.load(file)
+
+    if "source" in dset:
+        src = dset["source"]
+        figs = jsondata["figures"]
+        figids = [fig["id"] for fig in figs if stringmatch(src, fig["reference"]["cite_key"])]
+        if stringmatch(src, ""):
+            figids.append(None)
+        jsondata["embers"] = [be for be in jsondata["embers"] if be["mainfigure_id"] in figids]
+
+    if "keywords" in dset:
+        kws = dset["keywords"]
+        jsondata["embers"] = [be for be in jsondata["embers"] if stringmatch(kws, be["keywords"])]
+
+    if "scenario" in dset:
+        scf = dset["scenario"]
+        scens = jsondata["scenarios"]
+        scids = [scen["id"] for scen in scens if stringmatch(scf, scen["name"])]
+        if stringmatch(scf, ""):
+            scids.append(None)
+        jsondata["embers"] = [be for be in jsondata["embers"] if be["scenario_id"] in scids]
+
+    return Response(jsondata)
+
+
+def getdata(dset, as_embers=True, desc=False):
     """
     Gets data from server [or file: not implemented so far], as indicated in settings_data_access.py
     :param dset: the settings defining which data to retrieve, and how to process it for this a datat subset (dset),
                  as defined in settings_configs.py
+    :param as_embers: if True, converts the data to ember objects
+    :param desc: if True, includes the description of embers and transitions
     :return: a dict containing data.
     """
     report.write("Embers selection:", title=2)
     for crit in ['emberids', 'source', 'keywords', 'scenario', 'longname']:
         if crit in dset and dset[crit]:
             report.write(f"{crit.capitalize()}: {dset[crit]}")
+            logging.debug(f"{crit.capitalize()}: {dset[crit]}")
 
     request_param_str.first = True
-    response = requests.get(f"{API_URL}/edb/api/combined_data"
-                            + request_param_str(dset, 'emberids')
-                            + request_param_str(dset, 'source')
-                            + request_param_str(dset, 'keywords')
-                            + request_param_str(dset, 'scenario')
-                            + request_param_str(dset, 'longname')
-                            + request_param_str(dset, 'inclusion'),
-                            headers={"Authorization": f"Token {TOKEN}"})
+    if API_URL:
+        request =  (f"{API_URL}/edb/api/combined_data"
+                           + request_param_str(dset, 'emberids') + request_param_str(dset, 'source')
+                           + request_param_str(dset, 'keywords')
+                           + request_param_str(dset, 'scenario')
+                           + request_param_str(dset, 'longname')
+                           + request_param_str(dset, 'inclusion')
+                           + (request_param_str({"desc": ""}, 'desc') if desc else ""))
+        response = requests.get(request, headers={"Authorization": f"Token {TOKEN}"})
+    else:
+        request = f"Read from file, {dset}"
+        response = jsonfile_get(FILE, dset)
 
     if response.ok:
         report.write(f"Data received from: {API_URL}")
     else:
-        report.write(f"Data request failed ({API_URL})")
-        raise ConnectionError(response.text)
+        try:
+            rd = json.loads(response.content)
+        except json.decoder.JSONDecodeError:
+            rd = {}
+        if "detail" in rd:
+            msg = rd["detail"]
+        elif "error" in rd:
+            msg = rd["error"]
+        else:
+            msg = f"Unknown error. Did you provide a valid url in settings_data_access.py?"
+        msg = f"Data request '{request}' failed. Error message: {msg}"
+        report.write(msg)
+        report.close()
+        raise ConnectionError(msg)
 
-    # As a rule, the hazard variable will be converted to GMT.
-    conv_gmt = dset["conv_gmt"] if "conv_gmt" in dset else "compulsory"
-    # Extract ember data and convert to Ember objects from Embermaker
-    return extractdata(response, dump=False, conv_gmt=conv_gmt)
+    if as_embers:
+        # As a rule, the hazard variable will be converted to GMT.
+        conv_gmt = dset["conv_gmt"] if "conv_gmt" in dset else "compulsory"
+        try:
+        # Extract ember data and convert to Ember objects from Embermaker
+            return extractdata(response.content, conv_gmt=conv_gmt)
+        except LookupError:
+            raise LookupError(f"No data for {dset}")
+    else:
+        return json.loads(response.content)
 
 
-def extractdata(response, conv_gmt: str = 'compulsory', dump=False):
+def extractdata(jsondata, conv_gmt: str = 'compulsory'):
     """
     Processes the burning embers received from the database API to get 'EmberMaker' drawable embers, +a link to figures
-    :param response:
+    :param jsondata: json data as string or byte string, or an equivalent dict containing the data to process.
     :param conv_gmt: Whether the hazard unit should be converted to GMT;
-                      must be in ['compulsory', 'if_possible', 'never']
-    :param dump: Whether to save all data in a new json file
+                    must be in ['compulsory', 'if_possible', 'never']
+                    WARNING: if 'compulsory' is not used, this function may return inconsistent data, such as
+                    a mix of sea-level rise in meters rise and warming in °C.
     :return:
     """
     if conv_gmt not in ['compulsory', 'if_possible', 'never']:
         raise ValueError(f"conv_gmt must be 'compulsory', 'if_possible' or 'never', not {conv_gmt}")
 
     # Convert the json received as bytes data to Python objects:
-    try:
-        data = json.loads(response.content)
-    except json.JSONDecodeError:
-        print(response.content)
-        exit()
+    if type(jsondata) in (str, bytes):
+        try:
+            data = json.loads(jsondata)
+        except json.JSONDecodeError:
+            raise ValueError(f"Could not process the received json data; type: {type(jsondata)}.")
+    elif type(jsondata) is dict:
+        data = jsondata
+    else:
+        raise ValueError(f"Could not process the received data; type: {type(jsondata)}.")
 
     if "error" in data:
         raise Exception(data["error"])
-    report.write(f"Data extraction date: {data['extraction_date']}")
-
-    # Optionally save the data
-    if dump:
-        savejson(f"out/test_embers.json", data)
+    report.write(f"Data extraction date: {data['meta']['extraction_date']}")
 
     # Convert the json ember data to Ember objects
     lbes = embers_from_json(data['embers'])
-    print(f"ExtractData: Received {len(lbes)} ember(s).")
+    logging.info(f"ExtractData: Received {len(lbes)} ember(s).")
 
-    # Get information about related figures
-    emb_figs = data['embers_figures']
     logger = Logger()
 
     # Convert hazard metric to GMT if possible, otherwise remove the ember
-    if 'never' not in conv_gmt.lower():
+    if 'never' in conv_gmt.lower():
+        report.write(f"WARNING: conversion to a common variable or unit is not active; inconsistencies may occur.")
+    else:
         for be in lbes.copy():
             be.egr = egr  # Gives ember access to the risk level indexes, for interpolation etc.
             try:
@@ -193,23 +291,31 @@ def extractdata(response, conv_gmt: str = 'compulsory', dump=False):
                 if 'compulsory' in conv_gmt.lower():
                     lbes.remove(be)
                     report.write(f"Removed ember '{be}' because hazard variable is {be.haz_name_std}")
+                else:
+                    report.write(f"Ember '{be}' has the hazard variable {be.haz_name_std}, "
+                                 f"which could not be converted to GMT.")
 
         conv_log = logger.getlog(0)
         if conv_log:
             report.write(f"Unit conversion log:\n {'<br> '.join(conv_log)}")
-    print(f"ExtractData: Retained {len(lbes)} ember(s) after conversion to GMT.")
+    logging.info(f"ExtractData: Retained {len(lbes)} ember(s) after conversion to GMT.")
+    if len(lbes) == 0:
+        raise LookupError("ExtractData: no ember matches the provided criteria")
 
     figures = data['figures']
-    return {'lbes': lbes, 'emb_figs': emb_figs, 'figures': figures, 'scenarios': data['scenarios']}
+    return {'embers': lbes, 'figures': figures, 'scenarios': data['scenarios']}
 
 
-def embers_col_background(xlim: tuple[float, float] = None, ylim: tuple[float, float] = None, dir='vertic'):
+def embers_col_background(xlim: tuple[float, float] = None, ylim: tuple[float, float] = None, dir='vertic',
+                          soften_col: int = None):
     """
     Draws a light-coloured gradient following the ember risk level colours.
     This
     :param xlim:
     :param ylim:
     :param dir: 'vertic' (default) or 'horiz'
+    :param soften_col: soften colors; 1 - full colour, 2 - moderate softening, 3 (default) - high softening...
+                       (there is no upper bound: increasing values result in less colour and more white)
     :return:
     """
     if xlim is None:
@@ -217,6 +323,8 @@ def embers_col_background(xlim: tuple[float, float] = None, ylim: tuple[float, f
         return
     if ylim is None:
         ylim = (-1.5, 4.5)
+    if soften_col is None or soften_col < 1:
+        soften_col = 3
 
     # Set array to map colours to, according to direction
     if dir == 'vertic':
@@ -225,7 +333,7 @@ def embers_col_background(xlim: tuple[float, float] = None, ylim: tuple[float, f
         basarr = np.array(((0., 1.), (0., 1.)))
 
     cols = np.array([(1, 1, 1), (0.98, 0.92, 0), (1, 0.2, 0), (0.5, 0, 0.3)])
-    cols = 2/3.0 + cols / 3.0  # Soften colors
+    cols = (soften_col - 1.0) / soften_col + cols / soften_col  # Soften colors
     cmap = colors.LinearSegmentedColormap.from_list('embers', cols, N=255)
     plt.imshow(basarr,
                extent=(xlim[0], xlim[1], ylim[0], ylim[1]),
@@ -237,6 +345,9 @@ def embers_col_background(xlim: tuple[float, float] = None, ylim: tuple[float, f
 
 
 class Emberdata:
+    """
+    Todo: remove? (not actually used?)
+    """
     def __init__(self, response):
         try:
             self.data = json.loads(response.content)
@@ -249,9 +360,6 @@ class Emberdata:
 
     def get_embers_data(self):
         return self.data['embers']
-
-    def get_embers_figures(self):
-        return self.data['embers_figures']
 
 
 def dict_by_id(dicts, id=None):
@@ -429,7 +537,8 @@ class Report:
 def report_start(settings):
     global report
     report = Report(f"out/{settings['out_file']}")
-    report.write(f"{settings['title'].replace('\n', ' ')}", title=1)
+    title = settings['title'].replace('\n', ' ')
+    report.write(f"{title}", title=1)
 
 
 # We use only one "global" report, which is easy to refer to, by importing helpers

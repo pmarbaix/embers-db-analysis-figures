@@ -16,13 +16,10 @@ def draw_all_embers(**kwargs):
 
     # Get data for the current subset (dset)
     data = hlp.getdata(dset)
-    lbes = data['lbes']  # The list of burning embers in this data subset
+    lbes = data['embers']  # The list of burning embers in this data subset
 
     # Convert the json ember data to Ember objects
     lbes = embers_from_json(data['embers'])
-
-    # Get information about related figures
-    figures = data['embers_figures']
 
     # Save to file, for information / backup
     received_json = json.dumps(data, indent=4, ensure_ascii=False)
@@ -36,10 +33,6 @@ def draw_all_embers(**kwargs):
         except LookupError:
             lbes.remove(be)
             logger.addwarn(f"Removed ember {be} because hazard variable is {be.haz_name_std}")
-
-    for be in lbes:
-        fig = figures[str(be.id)]
-        print(f"- {fig['source_key']} - Fig. {fig['number']}: {be}")
 
     print(f"#embers: {len(lbes)}; request: {data['filters']}")
 

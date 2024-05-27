@@ -12,7 +12,8 @@ the value of each item in this list is a dict using the same keywords as the par
 from copy import deepcopy
 import inspect
 
-def get_settings(settings_choice:str = None, options:list = None, title = None):
+
+def get_settings(settings_choice: str = None, options: list = None, title=None):
     """
     Get settings from edb_paper_settings, selecting a configuration from python call args or CLI.
     :param settings_choice: the name of the desired settings
@@ -20,6 +21,7 @@ def get_settings(settings_choice:str = None, options:list = None, title = None):
       - wchapter: apply figure+chapter weighting (if unset, all embers have the same weight)
       - mean: whether to calculate mean values
       - ...
+    :param title: A title for the diagram
     :returns: selected settings (dict)
     """
     type = inspect.stack()[1][3]  # The 'type' of diagram is the name of the function calling get_settings
@@ -32,52 +34,40 @@ def get_settings(settings_choice:str = None, options:list = None, title = None):
             "title": "AR6 - all",
             "out_file": "AR6_all",
         },
-        "All": {
+        "All_included": {
+            "inclusion": 0,  # This is the default: get all with inclusion level >= 0
             "title": "All embers (except for those excluded from all processing)",
-            "out_file": "All",
+            "out_file": "Included_embers",
         },
         "Full": {
-            "inclusion": -3,
+            "inclusion": -3,  # Get strictly all embers, including those with
             "title": "All embers - including those not included in figures (!)",
-            "out_file": "All-with_excl",
+            "out_file": "All_embers",
         },
-
-        "AR6_global_regional": {
-            "multi": [
-                {"source": "AR6-WGII-Chapter2 OR AR6-WGII-Chapter7",
-                 "name": "Global"},
-                {"source": "AR6-WGII-Chapter9 OR AR6-WGII-Chapter11 OR AR6-WGII-Chapter13 OR AR6-WGII-Chapter14"
-                           " OR AR6-WGII-CCP4 OR AR6-WGII-CCP6",
-                 "name": "Regional"}
-            ],
-            "scenario": "NOT 'high adaptation'",
-            "title": "AR6 - regional vs global (without high adapt.)",
-            "out_file": "AR6_glob_noRFC_reg",
-        },
-        "SRs+AR6_global_regional": {
+        "SRs+AR6_global_regional": {  # Paper
             "multi": [{"source": "AR6-WGII-Chapter9 OR AR6-WGII-Chapter11 OR AR6-WGII-Chapter13 OR AR6-WGII-Chapter14"
                                  " OR AR6-WGII-CCP4 OR AR6-WGII-CCP6",
                        "name": "Regional", "style": ("blue", "-")},
                       {"source": "AR6-WGII-Chapter2 OR AR6-WGII-Chapter7 OR SRCCL OR SR1.5-Chapter3 OR SROCC",
                        "name": "Global", "style": ("black", "-")}
                       ],
-            "keywords": "!RFC",
+            "keywords": "NOT RFC",
             "scenario": "NOT 'high adaptation'",
             "title": f"SR1.5/SRCCL/SROCC/AR6: global vs regional (without high adapt.)",
             "out_file": f"SRs+AR6_glob_noRFCnoHighAdapt",
         },
-        "SRs+AR6noRFC": {
+        "SRs+AR6noRFC": {   # Documentation for paper
             "source": " SR1.5-Chapter3 OR SRCCL OR SROCC OR AR6-WGII-Chapter2 OR AR6-WGII",
             "keywords": "NOT RFC",
             "title": "SR1.5/SRCCL/SROCC/AR6: all (w/o RFCs)",
         },
-        "SRs+AR6noRFCnoHighAdapt": {
+        "SRs+AR6noRFCnoHighAdapt": {   # Paper
             "source": " SR1.5-Chapter3 OR SRCCL OR SROCC OR AR6-WGII-Chapter2 OR AR6-WGII",
             "keywords": "NOT RFC",
             "scenario": "NOT 'high adaptation'",
             "title": "SR1.5/SRCCL/SROCC/AR6: all (w/o RFCs & high adapt.)",
         },
-        "compare_regional": {
+        "compare_regions": {
             "multi": [{"source": "AR6-WGII-Chapter9",
                        "style": ('black', '-'), "name": "Africa"},
                       {"source": "AR6-WGII-Chapter11",
@@ -95,7 +85,7 @@ def get_settings(settings_choice:str = None, options:list = None, title = None):
                      "Polar regions(grey)",
             "out_file": f"compare_regional_{type}",
         },
-        "ecosystems_low-adapt_high-adapt": {
+        "ecosystems_low-adapt_high-adapt": {  # Paper
             "source": " SR1.5-Chapter3 OR SRCCL OR SROCC OR AR6-WGII-Chapter2 OR AR6-WGII",
             "multi": [{"name": "Ecosystems",
                        "keywords": "'ecosystems' AND NOT 'ecosystem services' AND NOT 'RFC'",
@@ -112,38 +102,72 @@ def get_settings(settings_choice:str = None, options:list = None, title = None):
             "title": f"Ecosystems / others, exc. high adaptation / high adaptation {options_str}",
             "out_file": f"compare_eco-human-sys",
         },
-        "histogram": {
-            "source": ["AR6-WGII-Chapter9 OR AR6-WGII-Chapter11 OR AR6-WGII-Chapter13 OR AR6-WGII-Chapter14"
-                       " OR AR6-WGII-CCP4 OR AR6-WGII-CCP6"],
-            "keywords": "!RFC",
-            "title": "SR1.5/SRCCL/SROCC/AR6: regional)",
-            "out_file": "histo",
+        "ecosystems_low-adapt_high-adapt_AR6": {  # Paper
+            "source": "AR6-WGII",
+            "multi": [{"name": "Ecosystems",
+                       "keywords": "'ecosystems' AND NOT 'ecosystem services' AND NOT 'RFC'",
+                       "style": ('#084', '-')},
+                      {"name": "Others w/o high adaptation",
+                       "keywords": "('ecosystem services' OR NOT 'ecosystems') AND NOT 'RFC'",
+                       "scenario": "NOT 'high adaptation'",
+                       "style": ('black', '-')},
+                      {"name": "Others with high adaptation",
+                       "keywords": "('ecosystem services' OR NOT 'ecosystems') AND NOT 'RFC'",
+                       "scenario": "'high adaptation'",
+                       "style": ('#02C', '-')},
+                      ],
+            "title": f"Ecosystems / others, exc. high adapt. / high adapt - AR6 only {options_str}",
+            "out_file": f"compare_eco-human-sys_AR6",
         },
-
-        "overview_systems": {
+        "SRs_vs_AR6-ecosystems": {    # Paper
+            "multi": [{"name": "SR1.5/SROCC/SRCCL - ecosystems",
+                       "source": "SRCCL OR SR1.5 OR SROCC",
+                       "keywords": "'ecosystems' AND NOT 'ecosystem services' AND NOT 'RFC'",
+                       "style": ('#084', '-')},
+                      {"name": "AR6 - ecosystems",
+                       "source": "AR6",
+                       "keywords": "'ecosystems' AND NOT 'ecosystem services' AND NOT 'RFC'",
+                       "style": ('black', '-')},
+                      ],
+            "title": f"Compare SRs to AR6 {options_str}",
+        },
+        "SRs_vs_AR6-others-no_high-adapt": {  # Paper-alt
+            "multi": [{"name": "SR1.5/SROCC/SRCCL - other systems w/o high adaptation",
+                       "source": "SRCCL OR SR1.5 OR SROCC",
+                       "keywords": "('ecosystem services' OR NOT 'ecosystems') AND NOT 'RFC'",
+                       "scenario": "NOT 'high adaptation'",
+                       "style": ('#084', '-')},
+                      {"name": "AR6 - other systems w/o high adaptation",
+                       "source": "AR6",
+                       "keywords": "('ecosystem services' OR NOT 'ecosystems') AND NOT 'RFC'",
+                       "scenario": "NOT 'high adaptation'",
+                       "style": ('black', '-')},
+                      ],
+            "title": f"Compare SRs to AR6 {options_str}",
+        },
+        "overview_systems": {   # Paper
             "multi": [
                 {"source": "AR6-WGII-Chapter2 OR AR6-WGII-Chapter7 OR SRCCL OR SR1.5-Chapter3 OR SROCC",
-                 "keywords": "ecosystems AND !RFC AND !'ecosystem services' AND !'human' AND !'ocean' AND !'coast'",
+                 "keywords": "ecosystems AND NOT RFC AND NOT 'ecosystem services' AND NOT 'human' AND NOT 'ocean' AND NOT 'coast'",
                  "name": "\n\nLand ecosystems",
                  "color": (0, 0.7, 0)},
                 {"source": "AR6-WGII-Chapter2 OR AR6-WGII-Chapter7 OR SRCCL OR SR1.5-Chapter3 OR SROCC",
-                 "keywords": "ecosystems AND !RFC AND !'ecosystem services' AND !'human' AND ('ocean' OR 'coast')",
+                 "keywords": "ecosystems AND NOT RFC AND NOT 'ecosystem services' AND NOT 'human' AND ('ocean' OR 'coast')",
                  "name": "\n\nOcean and coastal \n ecosystems",
                  "color": (0, 0, 0.8)},
                 {"source": "AR6-WGII-Chapter2 OR AR6-WGII-Chapter7 OR SRCCL OR SR1.5-Chapter3 OR SROCC",
-                 "keywords": "(!ecosystems OR 'ecosystem services' OR 'human') AND !RFC",
-                 "longname": "NOT 'Arctic:' AND NOT 'permafrost degradation'",
+                 "keywords": "(!ecosystems OR 'ecosystem services' OR 'human') AND NOT RFC",
+                 "longname": "NOT 'Arctic:' AND NOT 'permafrost degradation'",  # Moved to the regional figure below
                  "name": "\nHuman systems\nand ecosystem services",
                  "color": (0.8, 0.0, 0.1)},
             ],
             "sort_keywords": ['health', 'food', 'ecosystem services', 'land', 'forests', 'coast', 'ocean', 'water',
                               'animal', 'sdg', 'tourism', 'permafrost'],
-            "title": "SR1.5/SRCCL/SROCC/AR6 - global/systems",
             "out_file": "SRs+AR6_noRFC_overview_systems",
+            "soften_col": 2.2,
             "GMT": [1.5, 2.0, 2.5]
         },
-
-        "overview_regions": {
+        "overview_regions": {   # Paper
             "multi": [
                 {"source": "AR6-WGII-CCP6", "color": (0.16, 0, 0.87), "name": "Antarctica",
                     "keywords": "Antarctic"},
@@ -153,31 +177,27 @@ def get_settings(settings_choice:str = None, options:list = None, title = None):
                 {"source": "AR6-WGII-Chapter13", "color": (0.92, 0, 0.06), "name": "Europe"},
                 {"source": "AR6-WGII-Chapter14", "color": (0.05, 0.35, 0.05), "name": "North-America"},
                 {"source": "AR6-WGII-CCP6", "color": (0.16, 0, 0.87), "name": "Arctic",
-                    "keywords": "Arctic", "emberids": '27-42'},
+                    "keywords": "Arctic",  # The embers of the CCP6 devoted to Arctic (others ar Antarctica, above)
+                    "emberids": '27-42'},  # Additional embers about Arctic from SR1.5 and SRCCL Figure 7.1
             ],
             "sort_keywords": ['health', 'food', 'land', 'forests', 'coast', 'ocean', 'water', 'tourism'],
             "hide_chapter": True,
             "hide_category": ['Europe:', 'North America:', 'Arctic:', 'Africa:', 'Mediterranean region:',
                               'Antarctic:', 'in Australia'],  # Those are words from the names that would be redundant
-            "title": "AR6 - regional",
             "out_file": "SRs+AR6_noRFC_overview_reg2.5",
+            "soften_col": 2.2,
             "GMT": [1.5, 2.0, 2.5]
         },
-        "SRs_vs_AR6":{
-            "multi": [{"name": "SR1.5/SROCC/SRCCL - ecosystems",
-                       "source": "SRCCL OR SR1.5-Chapter3 OR SROCC",
-                       "keywords": "'ecosystems' AND NOT 'ecosystem services' AND NOT 'RFC'",
-                       "style": ('#084', '-')},
-                      {"name": "AR6 - ecosystems",
-                       "source": "AR6-WGII-Chapter2 OR AR6-WGII-Chapter7"
-                            " OR AR6-WGII-Chapter9 OR AR6-WGII-Chapter11 OR AR6-WGII-Chapter13 OR AR6-WGII-Chapter14"
-                            " OR AR6-WGII-CCP4 OR AR6-WGII-CCP6",
-                       "keywords": "'ecosystems' AND NOT 'ecosystem services' AND NOT 'RFC'",
-                       "style": ('black', '-')},
-                      ],
-            # "no-gmt-conv": True,
-            "title": f"Compare SRs to AR6 {options_str}",
-            "out_file": f"Compare SRs to AR6",
+        "AR6-RFCs": {
+            "source": "AR6-WGII-Chapter16",
+            "multi": [
+                {"longname": "1.", "color": "#B30", "linestyle": "-"},
+                {"longname": "2.", "color": "blue", "linestyle": "--"},
+                {"longname": "3.", "color": "green", "linestyle": "-"},
+                {"longname": "4.", "color": "#F88", "linestyle": "-"},
+                {"longname": "5.", "color": "purple", "linestyle": "--"}
+            ],
+            "out_file": "AR6_RFCs",
         },
     }
 

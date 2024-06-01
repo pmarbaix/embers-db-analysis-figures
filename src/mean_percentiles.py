@@ -5,7 +5,6 @@ import settings_configs
 from embermaker.embergraph import EmberGraph
 from embermaker import ember as emb
 from itertools import groupby
-import logging
 
 def mean_percentiles(**kwargs):
     """
@@ -146,7 +145,7 @@ def aggreg(lbes, hazlevs: np.array, ax=None, dset=None, exprisk=False, figures=N
 
     if figures:
         hlp.report.write(f"Weighting per chapter/figure (n total={len(lbes)})", title=2)
-        hlp.report.table_head(["Weighting group", "Embers", "Weight"])
+        hlp.report.table_head("Weighting group", "Embers", "Weight")
         # Calculate weights: 'equal weight per chapter/figure' option
         # (weighting per chapter is the rule, per figure is applied to SRCCL and SR1.5, due to differences in scope)
         # Create a dict that will link the id of each ember (the key) to the label of its weighting group:
@@ -167,7 +166,7 @@ def aggreg(lbes, hazlevs: np.array, ax=None, dset=None, exprisk=False, figures=N
             for be in be_set:
                 be.ext['weight'] = weight
                 names += f"{be.longname}({be.id});<br>"
-            hlp.report.table_write([group_key, names, f"{weight:5.2f}"])
+            hlp.report.table_write(group_key, names, f"{weight:5.2f}")
     else:
         for be in lbes:
             be.ext['weight'] = 1.0
@@ -228,8 +227,8 @@ def aggreg(lbes, hazlevs: np.array, ax=None, dset=None, exprisk=False, figures=N
                 ax.text(0.2, 2.8 - dset["idset"] / 6, f"{dset['name']}", color=dset['style'][0],
                         fontsize=9, horizontalalignment='left')
 
-    print(f"Standard deviation of the mean value of risk levels: {np.mean(rmean_std):.4f}; "
-          f"max: {np.max(rmean_std):.4f}")
+    hlp.report.write(f"Mean over the hazard levels of the standard deviation of the risk levels: "
+                     f"{np.mean(rmean_std):.4f}; max over hazard levels: {np.max(rmean_std):.4f}")
 
     return risk_p10, risk_p50, risk_p90, risk_avgs
 
@@ -244,8 +243,8 @@ def report_percentile(percentile, prisk, names_risk):
     """
     side = "<=" if percentile < 50 else ">="
     hlp.report.write(f"Embers {side} p{percentile}", title=3)
-    hlp.report.table_head(["Embers", "Risk level"])
+    hlp.report.table_head("Embers", "Risk level")
     for risk, group in groupby(names_risk, lambda x: x[1]):
         if (risk <= prisk and percentile < 50) or (risk >= prisk and percentile > 50):
-            hlp.report.table_write(('<br> '.join(nr[0] for nr in group), f"{risk:4.2f}"))
+            hlp.report.table_write(*('<br> '.join(nr[0] for nr in group), f"{risk:4.2f}"))
     hlp.report.write(f"{len([1 for namris in names_risk if namris[1] == prisk])} embers strictly at p{percentile}")

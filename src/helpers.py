@@ -166,7 +166,7 @@ def jsonfile_get(filename, dset):
     if "source" in dset:
         src = dset["source"]
         figs = jsondata["figures"]
-        figids = [fig["id"] for fig in figs if stringmatch(src, fig["reference"]["cite_key"])]
+        figids = [fig["id"] for fig in figs if stringmatch(src, fig["biblioreference.cite_key"])]
         if stringmatch(src, ""):
             figids.append(None)
         jsondata["embers"] = [be for be in jsondata["embers"] if be["mainfigure_id"] in figids]
@@ -203,7 +203,7 @@ def getdata(dset, as_embers=True, desc=False):
 
     request_param_str.first = True
     if API_URL:
-        request =  (f"{API_URL}/edb/api/combined_data"
+        request =  (f"{API_URL}/api/combined_data"
                            + request_param_str(dset, 'emberids') + request_param_str(dset, 'source')
                            + request_param_str(dset, 'keywords')
                            + request_param_str(dset, 'scenario')
@@ -303,7 +303,8 @@ def extractdata(jsondata, conv_gmt: str = 'compulsory'):
         raise LookupError("ExtractData: no ember matches the provided criteria")
 
     figures = data['figures']
-    return {'embers': lbes, 'figures': figures, 'scenarios': data['scenarios']}
+    return {'embers': lbes, 'figures': figures, 'scenarios': data['scenarios'],
+            'biblioreferences': data['biblioreferences']}
 
 
 def embers_col_background(xlim: tuple[float, float] = None, ylim: tuple[float, float] = None, dir='vertic',
@@ -502,6 +503,8 @@ class Report:
         :param txt: the text to write
         :param title: the level of title / subtitle
         """
+        if title == 1:
+            print(txt)
         if title and title < 5:
             prefix = "#" * title + " "
         else:
@@ -509,12 +512,12 @@ class Report:
         if self.file:
             self.file.write(f"\n{prefix}{txt}\n")
 
-    def table_head(self, headers: list):
+    def table_head(self, *headers):
         if self.file:
             self.file.write(f'\n| {" | ".join(headers)}\n')
             self.file.write(f'| {" --- | " * len(headers)}\n')
 
-    def table_write(self, content: list):
+    def table_write(self, *content):
         if self.file:
             self.file.write(f'| {" | ".join([str(c) for c in content])}\n')
 

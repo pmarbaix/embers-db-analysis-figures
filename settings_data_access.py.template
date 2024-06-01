@@ -1,3 +1,4 @@
+# Choose source: remote / local / file
 source = "remote"
 
 FILE = None

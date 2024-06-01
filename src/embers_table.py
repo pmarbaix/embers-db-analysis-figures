@@ -5,6 +5,28 @@ import settings_configs
 import re
 logger = embhlp.Logger()  # Standard log function in EmberMaker
 
+def get_fig_sortkey(biblioreferences):
+    def fig_sortkey(fig):
+        """
+        Sort key for figures in a chronological + chapter report order
+        :param fig: figure
+        :return: sortkey
+        """
+        fignum = fig['number']
+        # Get the number of this figure within is chapter, if any (= *.number)
+        figkeys = fignum.split(".")
+        figinrep = figkeys[1] if len(figkeys) > 1 else 0
+        figinrep = int(re.sub('[^0-9]', '', str(figinrep)))
+        rep = [br for br in biblioreferences if br['cite_key'] == fig['biblioreference.cite_key']][0]
+        chapter = rep['chapter']
+        if chapter is None: # Try to get an integer from the first part of the figure number
+            try: # Reject CCPs ect. et end of list, after chapters
+                chapter = int(re.sub('[^0-9]', '', str(figkeys[0]))) + 100
+            except ValueError:
+                chapter = 100
+        sortkey = [int('RFC' in fig['shortname']), rep['year'], chapter, figinrep]
+        return sortkey
+    return fig_sortkey
 
 def embers_table(**kwargs):
     """
@@ -26,35 +48,25 @@ def embers_table(**kwargs):
     dset["conv_gmt"] = "if_possible"
     data = hlp.getdata(dset)
     lbes = data['embers']
+    biblioreferences = data['biblioreferences']
     hlp.report.embers_list(lbes)
 
     embers = data['embers']
-    figures = data['figures']
+    embers_figids = [be.meta['mainfigure_id'] for be in embers]
+    # Remove any figure which would not include any ember taken into account here
+    # (in practice: this removes the SRCCL - "sup mat" figures, which are not in the report,
+    #  and the TAR SPM; this will need to be adjusted if new embers beyond AR6 are added)
+    figures = [fig for fig in data['figures'] if fig['id'] in embers_figids]
     scenarios = data['scenarios']
 
-    dbes = {str(be.id): be for be in lbes}
+    dbes = {be.id: be for be in lbes}
 
-    def fig_sort_key(fig):
-        fignum = fig['number']
-        figkeys = re.split(r'(\d+)', fignum)
-        figkeys.append('0')
-        figkeys.append('0')
-        keylist = [(int(key) if key.isdigit() else key) for key in figkeys]
-        reports = ['TAR-WGII-Chapter19', 'Smith09', 'AR5-WGII-Chapter19', 'AR5-SYR',
-                   'SR1.5-Chapter3', 'SRCCL-Chapter7', 'SRCCL-Chapter7-SM', 'SROCC-Chapter5',
-                   'AR6-WGII-Chapter2', 'AR6-WGII-Chapter7', 'AR6-WGII-Chapter9',
-                   'AR6-WGII-Chapter11', 'AR6-WGII-Chapter13', 'AR6-WGII-Chapter14', 'AR6-WGII-Chapter16',
-                   'AR6-WGII-CCP4', 'AR6-WGII-CCP6',
-                   ]
-        reportidx = reports.index(fig['biblioreference.cite_key'])
-        keylist = [int('RFC' in fig['shortname']), reportidx, keylist[3]]
-        return keylist
-
-    figures.sort(key=fig_sort_key)
+    fig_sortkey = get_fig_sortkey(biblioreferences)
+    figures.sort(key=fig_sortkey)
     # Create the summary table (Simple md files are crated by the small "Report" class)
     tableout = hlp.Report('out/'+settings['out_file']+'_out.md')
-    tableout.table_head(["Report: main figure", "*shortname* <br/> (title)", "#other adapt.", "#high adapt.", "#total",
-                          "High risk at mean T (min, max)"])
+    tableout.table_head("Report: main figure", "*shortname* <br/> (title)", "#other adapt.", "#high adapt.", "#total",
+                        "High risk at mean T (min, max)")
 
     # Store 'grand total' for showing at the end of the table
     gt_o_adap = 0
@@ -63,7 +75,7 @@ def embers_table(**kwargs):
 
     # Loop over figures = lines in the summary table
     for fig in figures:
-        be_ids = [be.id for be in embers if  be.meta['mainfigure_id'] == fig['id'] ]
+        be_ids = [be.id for be in embers if be.meta['mainfigure_id'] == fig['id'] ]
         n_other_adap = 0
         n_high_adap = 0
         c_all = 0
@@ -95,11 +107,11 @@ def embers_table(**kwargs):
             hr_message = f" {np.mean(hr_mid):5.2f} ({hr_bot:4.2f}-{hr_top:4.2f})"
         else:
             hr_message = f"Not temperature {list(be_haz_names)}"
-        tableout.table_write([f"{fig['reference']['cite_key']}:<br/> fig. {fig['number']}",
-                              f"*{fig['shortname']}* <br/> ({fig['title']})",
-                              n_other_adap, n_high_adap, c_all, hr_message])
+        tableout.table_write(f"{fig['biblioreference.cite_key']}:<br/> fig. {fig['number']}",
+                             f"*{fig['shortname']}* <br/> ({fig['title']})",
+                             n_other_adap, n_high_adap, c_all, hr_message)
         gt_o_adap += n_other_adap
         gt_h_adap += n_high_adap
         gt_c_all += c_all
-    tableout.table_write(["Total", "", gt_o_adap, gt_h_adap, gt_c_all, ""])
+    tableout.table_write("Total", "", gt_o_adap, gt_h_adap, gt_c_all, "")
     tableout.close(total=False)

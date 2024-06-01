@@ -1,30 +1,19 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import src.helpers as hlp
 import settings_configs
 
+
 def confidence(**kwargs):
     """
-    Cumulative distribution of mid-points within transitions.
-    Arguments are passed to get_settings:
-    - settings_choice: the name of the desired settings within settings_config.py
-    - a list of options, added to the settings
+    Table of confidence levels (Markdown)
     """
     # Get settings from edb_paper_settings, according to the choices made in keyword arguments (see getsettings)
     settings = settings_configs.get_settings(**kwargs)
     # Create global report file (Markdown)
     hlp.report_start(settings)
-    # Create plot
-    fig, ax = plt.subplots()
-
-    # Define GMT (= 'hazard' metric) levels for which to calculate
-    hazlevs = np.arange(0.0, 4, 0.05)
-
-    # Create storage for the "aggregated ember(s)" (an ember may be created for each data subset)
-    aggreg_bes = []
 
     # Create the summary table (Simple md files are crated by the small "Report" class)
-    tableout = hlp.Report('out/'+settings['out_file']+'_out.md')
+    tableout = hlp.Report('out/' + settings['out_file'] + '_out.md')
     bins = 0.5 + np.arange(5)
     tableout.write(f"Confidence range bins limits: {bins}")
 
@@ -48,7 +37,7 @@ def confidence(**kwargs):
             trs = [be.trans[itr].confidence_index for be in tbe]
             haz = [hlp.hfn(be, itr + 0.5) for be in tbe]
             haz50 = np.percentile(haz, 50.0, method='linear')
-            hist = np.histogram(trs, bins=bins) # bins are also created for 'low to med' etc.
+            hist = np.histogram(trs, bins=bins)  # bins are also created for 'low to med' etc.
 
             tableout.table_write(f"{itr}", f"{np.mean(haz):.2f} ({haz50})", f"{np.mean(trs):.2f}",
                                  *[str(h) for h in hist[0]],

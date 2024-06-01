@@ -18,7 +18,7 @@ from src.embers_table import embers_table
 from src.confidence import confidence
 
 # Default list of figures to build:
-do_figures = ['tab2']
+do_figures = ['tab4']
 
 
 def make_figures(figures=None):
@@ -88,7 +88,8 @@ def make_figures(figures=None):
             title="Table 4")
 
 
-    print("Job completed! Note that a 'processing report' is provided with each figure (.md = Markdown format).")
+    print("Job completed! Note that a 'processing report' is provided with each figure (.md = Markdown format). "
+          "\nFor tables, there are two .md files: the table itself + the processing report.")
 
 
 # Optional start from command-line, with arguments

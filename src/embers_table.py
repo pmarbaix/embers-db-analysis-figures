@@ -74,7 +74,9 @@ def embers_table(**kwargs):
     gt_c_all = 0
 
     # Loop over figures = lines in the summary table
+    hlp.report.table_head("Report", "Figure number", "Source")
     for fig in figures:
+        hlp.report.table_write(fig['biblioreference.cite_key'], fig['number'], fig['biblioreference'])
         be_ids = [be.id for be in embers if be.meta['mainfigure_id'] == fig['id'] ]
         n_other_adap = 0
         n_high_adap = 0

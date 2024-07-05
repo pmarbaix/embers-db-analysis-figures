@@ -18,7 +18,7 @@ from src.embers_table import embers_table
 from src.confidence import confidence
 
 # Default list of figures to build:
-do_figures = ['tab4']
+do_figures = ['tab2']
 
 
 def make_figures(figures=None):

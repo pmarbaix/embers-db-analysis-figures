@@ -142,7 +142,7 @@ def stringmatch(criteria, text):
     for ex in pexp:
         tx = ex[0].strip().strip("'")
         if tx:
-            fnd = str (tx.lower() in text) + " "
+            fnd = str(tx.lower() in text) + " "
         else:
             fnd = ""
         lstr += " " + fnd + ex[1].lower()
@@ -188,7 +188,7 @@ def jsonfile_get(filename, dset):
 
 def getdata(dset, as_embers=True, desc=False):
     """
-    Gets data from server [or file: not implemented so far], as indicated in settings_data_access.py
+    Gets data from server or file, as indicated in settings_data_access.py
     :param dset: the settings defining which data to retrieve, and how to process it for this a datat subset (dset),
                  as defined in settings_configs.py
     :param as_embers: if True, converts the data to ember objects
@@ -203,13 +203,13 @@ def getdata(dset, as_embers=True, desc=False):
 
     request_param_str.first = True
     if API_URL:
-        request =  (f"{API_URL}/api/combined_data"
-                           + request_param_str(dset, 'emberids') + request_param_str(dset, 'source')
-                           + request_param_str(dset, 'keywords')
-                           + request_param_str(dset, 'scenario')
-                           + request_param_str(dset, 'longname')
-                           + request_param_str(dset, 'inclusion')
-                           + (request_param_str({"desc": ""}, 'desc') if desc else ""))
+        request = (f"{API_URL}/api/combined_data"
+                   + request_param_str(dset, 'emberids') + request_param_str(dset, 'source')
+                   + request_param_str(dset, 'keywords')
+                   + request_param_str(dset, 'scenario')
+                   + request_param_str(dset, 'longname')
+                   + request_param_str(dset, 'inclusion')
+                   + (request_param_str({"desc": ""}, 'desc') if desc else ""))
         response = requests.get(request, headers={"Authorization": f"Token {TOKEN}"})
     else:
         request = f"Read from file, {dset}"
@@ -237,12 +237,12 @@ def getdata(dset, as_embers=True, desc=False):
         # As a rule, the hazard variable will be converted to GMT.
         conv_gmt = dset["conv_gmt"] if "conv_gmt" in dset else "compulsory"
         try:
-        # Extract ember data and convert to Ember objects from Embermaker
+            # Extract ember data and convert to Ember objects from Embermaker
             return extractdata(response.content, conv_gmt=conv_gmt)
         except LookupError:
             raise LookupError(f"No data for {dset}")
     else:
-        return json.loads(response.content)
+        return json.loads(response.content) if type(response.content) is not dict else response.content
 
 
 def extractdata(jsondata, conv_gmt: str = 'compulsory'):

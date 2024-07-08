@@ -109,6 +109,7 @@ def mean_percentiles(**kwargs):
     if aggreg_bes and 'ember' in settings['options']:
         outfile = 'out/ember_' + settings['out_file']
         agr = EmberGraph(outfile, grformat="PDF")
+        agr.gp['haz_name_std'] = 'GMT'  # Needed because it is set for the ember (above)
         agr.gp['haz_axis_top'] = 4.0
         agr.gp['gr_fnt_size'] = 10
         agr.gp['conf_lines_ends'] = 'bar'  # 'bar', 'arrow', or 'datum' (or None)

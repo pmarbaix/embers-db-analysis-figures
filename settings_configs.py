@@ -40,7 +40,7 @@ def get_settings(settings_choice: str = None, options: list = None, title=None):
             "out_file": "Included_embers",
         },
         "Full": {
-            "inclusion": -3,  # Get strictly all embers, including those with
+            "inclusion": -3,  # Get strictly all embers
             "title": "All embers - including those not included in figures (!)",
             "out_file": "All_embers",
         },
@@ -198,6 +198,10 @@ def get_settings(settings_choice: str = None, options: list = None, title=None):
                 {"longname": "5.", "color": "purple", "linestyle": "--"}
             ],
             "out_file": "AR6_RFCs",
+        },
+        "TEST": {
+            "inclusion": 0,
+            "out_file": "TEST",
         },
     }
 

@@ -155,13 +155,34 @@ def stringmatch(criteria, text):
 
 def jsonfile_get(filename, dset):
     """
-    Returns the filtered content of a json file according to the criteria in dset
-    :param filename:
-    :param dset:
-    :return:
+    Returns the filtered content of a json file according to the combination of criteria defined in dset
+    :param filename: full name of the json input file
+    :param dset: a dict containing the search criteria
+    :return: a dict of ember-related data, containing embers and other data read from the input file.
     """
     with open(filename, "r") as file:
         jsondata = json.load(file)
+
+    # Filtering based on the inclusion_level is done first, because embers removed here can't be re-introduced
+    # even by explicitly required them trough providing their id in 'emberids' below (same rule as in the API).
+    if "inclusion" in dset:
+        ilev = int(dset["inclusion"])
+        jsondata["embers"] = [be for be in jsondata["embers"] if int(be["inclusion_level"]) >= ilev]
+
+    # If ember ids were provided, get the list of corresponding embers;
+    # Unlike the other filter criteria, emberids *add* embers to the retained set => temporarily stored in 'bes'
+    if "emberids" in dset:
+        src = dset["emberids"].split('-')
+        bes = [be for be in jsondata["embers"] if str(be["id"]) in src]
+    else:
+        bes = None  # list of embers to add after filtering.
+
+    # Filter the received embers according to the other criteria (each criteria reduces the selected set)
+    filtered = False
+    if "longname" in dset:
+        src = dset["longname"]
+        jsondata["embers"] = [be for be in jsondata["embers"] if stringmatch(src, be["longname"])]
+        filtered = True
 
     if "source" in dset:
         src = dset["source"]
@@ -170,10 +191,12 @@ def jsonfile_get(filename, dset):
         if stringmatch(src, ""):
             figids.append(None)
         jsondata["embers"] = [be for be in jsondata["embers"] if be["mainfigure_id"] in figids]
+        filtered = True
 
     if "keywords" in dset:
         kws = dset["keywords"]
         jsondata["embers"] = [be for be in jsondata["embers"] if stringmatch(kws, be["keywords"])]
+        filtered = True
 
     if "scenario" in dset:
         scf = dset["scenario"]
@@ -182,6 +205,16 @@ def jsonfile_get(filename, dset):
         if stringmatch(scf, ""):
             scids.append(None)
         jsondata["embers"] = [be for be in jsondata["embers"] if be["scenario_id"] in scids]
+        filtered = True
+
+    if bes:
+        if filtered:
+            jsondata["embers"] = jsondata["embers"] + [be for be in bes if be not in jsondata["embers"]]
+        else:
+            jsondata["embers"] = bes
+
+    if jsondata["meta"]:
+        jsondata["meta"]["embers_count"] = len(jsondata["embers"])
 
     return Response(jsondata)
 
@@ -204,12 +237,14 @@ def getdata(dset, as_embers=True, desc=False):
     request_param_str.first = True
     if API_URL:
         request = (f"{API_URL}/api/combined_data"
-                   + request_param_str(dset, 'emberids') + request_param_str(dset, 'source')
+                   + request_param_str(dset, 'emberids')
+                   + request_param_str(dset, 'source')
                    + request_param_str(dset, 'keywords')
                    + request_param_str(dset, 'scenario')
                    + request_param_str(dset, 'longname')
                    + request_param_str(dset, 'inclusion')
-                   + (request_param_str({"desc": ""}, 'desc') if desc else ""))
+                   + (request_param_str({"list": ""}, 'desc') if desc else ""))
+
         response = requests.get(request, headers={"Authorization": f"Token {TOKEN}"})
     else:
         request = f"Read from file, {dset}"

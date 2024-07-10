@@ -2,19 +2,25 @@
 
 This repository contains the code needed to reproduce the figures and tables from ([Marbaix et al. 2024b](#2)).
 
+Note: this code was tested with python 3.11 and 3.12.
+
 ## Basic use
 
-Run ```pip install -r requirements.txt```
+- Create a python virtual environment and get the project file, such as by using git clone.
 
-Copy `settings_data_access.py.template` to `settings_data_access.py` and adjust the parameters to your local needs:
+- Run ```pip install -r requirements.txt```
 
-For `datasource`, chose either `remote` or `file`. 
-To reproduce the figures from ([Marbaix et al. 2024b](#2)), use the following:
+- Copy `settings_data_access.py.template` to `settings_data_access.py` and adjust the parameters to your needs:
 
-datasource = "file"
-FILE = <path to the file downloaded from [Marbaix et al. (2024)](#1)>
+    - For `datasource`, chose either `remote` or `file`. 
+    - To reproduce the figures from ([Marbaix et al. 2024b](#2)), one only needs to set the following:
+    ```
+    datasource = "file"
+    FILE = path_name_for_the_file_downloaded_from_Marbaix_etal_2024
+    ```
 
-Then run `python make_figures.py all`
+- Run `python make_figures.py all`. This should give you all figures and tables (you might have to close
+  the window showing each figure before getting the next one). All will be stored in a subdirectory named 'out'.
 
 To get data from the online API at https://climrisk.org instead of the file archive, see `Embers_retrieve_API.md`
 

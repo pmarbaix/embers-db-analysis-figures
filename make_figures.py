@@ -16,10 +16,10 @@ from src.cumulative import cumulative
 from src.overview import overview
 from src.embers_table import embers_table
 from src.confidence import confidence
+from os import path, makedirs
 
 # Default list of figures to build:
 do_figures = ['5a']
-
 
 def make_figures(figures=None):
     all = False
@@ -29,6 +29,10 @@ def make_figures(figures=None):
         all = True
     else:
         figures = [figures]
+
+    # Output is written in subdirectory 'out': create if it does not exist
+    if not path.exists("./out"):
+        makedirs("./out")
 
     if '5a' in figures or all:
         mean_percentiles(settings_choice="SRs+AR6_global_regional", options=['mean', 'median', 'ember'],

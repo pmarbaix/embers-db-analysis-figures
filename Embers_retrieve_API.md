@@ -13,8 +13,9 @@ If you access through the API, the criteria should be sent as parameters of the 
 If you take the data from a file archive, this repository contains a helper function to read the file and apply
 the same search criteria.
 
-The result is provided in [JSON](https://en.wikipedia.org/wiki/JSON) format.
-This format is based on text; to have an idea of how it is defined, have a look at the archive 
+The result is provided in [JSON](https://en.wikipedia.org/wiki/JSON) format 
+(described here: [json.org](https://json.org)).
+This format is based on human-readable text; to have an idea of how it is defined, have a look at the archive 
 file ([Marbaix et al. 2024](#1)).
 This format is easy to use in programming languages used for data analysis, including Python and R.
 For example, in Python, one would import the built-in module `json` and call methods such as 
@@ -39,25 +40,60 @@ When data is requested through the API, the filtering is handled by PostgreSQL's
 
 There are two parameters which only work with the API access:
 
-- `desc`: if present, include the description field for embers and the explanation fields for transitions
-  (the default is to omit those fields, which are generally not needed for analyses).
-
 - `list`: if present, restricts the output to a list of embers, containing only the id and longname of each ember.
+
+- `desc`: if present, include the description field for embers and the explanation fields for transitions
+  (the default is to omit those fields, which are generally not needed for analyses; this parameter
+  has no effect if `list`is also set).
 
 ### Example
 
-You may use [cURL](https://en.wikipedia.org/wiki/CURL) to test data retrival. For example,
+You may use [cURL](https://en.wikipedia.org/wiki/CURL) to test data retrieval. For example,
 
 ```
 curl "https://climrisk.org/edb/api/combined_data?source=AR6_WGII_Chapter16" -H "Authorization: Token
 {token}"
 ```
 
-would retrieve the data for the 5 "Reasons for concern" embers as assessed in IPCC AR6, in JSON format.
+would retrieve the data for the 5 "Reasons for concern" embers as assessed in IPCC AR6, in JSON format. 
+To have a look at a very short and more 'human-readable' output, try
+
+```
+curl "https://climrisk.org/edb/api/combined_data?list=&source=AR6_WGII_Chapter16" -H "Accept: application/json; indent=4" -H "Accept: application/json; indent=4" -H "Authorization: Token
+{token}"
+```
+
+Note: `indent=4` is what makes the output formatted in a 'human-readable' way (as the archive file).
 
 ## 3. Reading an archive file
 
+As JSON is based on text, it is easy to read from various programming languages. In Python, it could be for example:
 
+```
+import json
+with open("path/to/your/file", "r") as file:
+    jsondata = json.load(file)
+```
+To read and filter the embers data according to the search criteria defined in section 4, 
+you may use the function `jsonfile_get(filename, **kwargs)` provided in the `src` package, with the desired
+filtering parmeters (from section 4 below) provided as keyword arguments. For example,
+
+```
+from src.helpers import jsonfile_get
+filename = 'path_to_a_copy_of/archive_file_from_zenodo.json'
+jsonfile_get(filename, source="AR6-WGII-Chapter16").content['embers']
+```
+Notes: 
+- while we will make all the possible to retain the existing functionality of the online access API
+  (section 2) while possibly extending it, the name and details of 'helper' functions provided here could change in the future.
+  These are provided as tools to reproduce the figures in [Marbaix et al. (2024b)](#2) as well as examples.
+- `jsonfile_get` filters the embers with a view to follow the same approach as in the online API, but 
+  it does not use the exact same code: it is based on python filtering, while the API relies on PostgreSQL
+  for filtering. When producing the figures for [Marbaix et al. (2024b)](#2), the selection of embers is exactly
+  the same with each of these approaches; however, there is no guarantee that it would remain true for any possible 
+  search criteria.
+- `jsonfile_get` only filters *the embers*: it reduces the set of embers found in the input file to what is
+  requested, but always provides the full list ember groups, figures, etc.
 
 ## 4. Filters
 A specific subset of the data can be obtained by specifying one or more of the following 

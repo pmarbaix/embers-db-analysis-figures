@@ -2,6 +2,6 @@ numpy~=1.26.4
 matplotlib~=3.8.4
 requests~=2.31.0
 reportlab~=4.2.0
-embermaker>=2.0.1
+embermaker~=2.1.0b1
 wheel
 setuptools

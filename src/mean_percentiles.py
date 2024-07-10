@@ -28,7 +28,7 @@ def mean_percentiles(**kwargs):
 
     # Loop over data subsets (defined in the settings)
     for dset in hlp.DSets(settings):
-        hlp.report.write(f"Source {dset["idset"]}: {dset['name']}", title=1)
+        hlp.report.write(f"Source {dset[('idset')]}: {dset['name']}", title=1)
 
         # Get data for the current subset (dset)
         data = hlp.getdata(dset)

@@ -4,7 +4,7 @@ This repository contains the code needed to reproduce the figures and tables fro
 
 ## Basic use
 
-Run ```pip install -r requirements-dev.txt```
+Run ```pip install -r requirements.txt```
 
 Copy `settings_data_access.py.template` to `settings_data_access.py` and adjust the parameters to your local needs:
 

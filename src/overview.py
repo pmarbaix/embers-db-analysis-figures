@@ -29,7 +29,7 @@ def overview(**kwargs):
     icount = 0
     # Loop over data subsets (defined in the settings)
     for dset in hlp.DSets(settings):
-        hlp.report.write(f"Source {dset["idset"]}: {dset['name'].replace('\n', ' ').replace('  ', ' ')}", title=1)
+        hlp.report.write(f"Source {dset['idset']}: {dset['name'].replace('\n', ' ').replace('  ', ' ')}", title=1)
 
         # Get data for the current subset (dset)
         data = hlp.getdata(dset)

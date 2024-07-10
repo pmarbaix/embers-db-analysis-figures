@@ -12,7 +12,7 @@ def draw_all_embers(**kwargs):
     dset = settings_configs.get_settings(**kwargs)
     # Create global report file (Markdown)
     hlp.report_start(dset)
-    hlp.report.write(f"Source {dset["idset"]}: {dset['name']}", title=1)
+    hlp.report.write(f"Source {dset['idset']}: {dset['name']}", title=1)
 
     # Get data for the current subset (dset)
     data = hlp.getdata(dset)

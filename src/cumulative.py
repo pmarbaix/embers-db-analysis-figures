@@ -21,7 +21,7 @@ def cumulative(**kwargs):
     # Loop over data subsets (defined in the settings)
     for dset in hlp.DSets(settings):
         if dset["ndsets"] > 1:
-            hlp.report.write(f"Source {dset["idset"]}: {dset['name']}", title=1)
+            hlp.report.write(f"Source {dset['idset']}: {dset['name']}", title=1)
 
         # Get data for the current subset and the list of burning embers (lbes)
         data = hlp.getdata(dset)

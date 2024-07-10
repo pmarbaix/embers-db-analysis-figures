@@ -35,8 +35,8 @@ Depending on how it is called, it may build all or a subset of these figures (mo
 `settings_configs.py` defines 'configurations' to run each of the figure-building functions. 
 This file is mainly used to select which data is going to be used for each part of a plot;
 additional arguments may provide names and colours used on a plot to illustrate the selected data.
-The key "multi" has a specific role: its value must be a list, which will specify subset of data for separate analysis,
-such as to get lines representing each data subset in a plot.
+The key "multi" has a specific role: its value must be a list, which will specify subsets of data for separate analysis,
+such as to get lines representing each data subsets in a plot.
 
 `src` is a python package which contains the code to draw figures and get the data provided in summary tables.
 To find how each module is used to get the figures and tables, see `make_figures.py`. As its name indicates,

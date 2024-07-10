@@ -1,0 +1,6 @@
+settings_data_access.py
+/.venv/
+/.idea/
+/extra/
+/old/
+/out/

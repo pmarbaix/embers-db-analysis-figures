@@ -1,17 +1,18 @@
-# Choose source: remote / local / file
-source = "remote"
+# Choose datasource: remote / local / file
+datasource = "file"
 
 FILE = None
 API_URL = None
 TOKEN = None
-if source == "remote":
+
+if datasource == "remote":
     API_URL = "https://climrisk.org/edb"
     TOKEN = "<your-token-on-climrisk-for-edb>"
-elif source == "local":
+elif datasource == "local":
     API_URL = "http://localhost:8000/edb"
     TOKEN = "<local-token>"
-    print("WARNING: getting data from the LOCAL database")
-elif source == "file":
-    FILE = "edb-archive-2024.json"
+    print("WARNING: getting data from the LOCAL (test) database")
+elif datasource == "file":
+    FILE = "embers-archive-2024.json"
 else:
-    raise Exception("Source must be 'local', 'remote' or 'file")
+    raise Exception("'datasource' must be 'local', 'remote' or 'file")

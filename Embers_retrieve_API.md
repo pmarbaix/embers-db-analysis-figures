@@ -5,7 +5,7 @@
 The 'burning embers' data used in the Climate Risk Ember Explorer can be accessed in two ways:
 
 - from the online database, through a simple API, as explained in section 2.
-- from a file archive file available from Zenodo [Marbaix et al. 2024](#1); 
+- from a file archive file available from Zenodo ([Marbaix et al. 2024](#1)); 
   the main benefit is that you can refer to a specific version of the data (section 3).
 
 In both cases, you may filter the data to get a subset of the embers based on search criteria which you define.
@@ -30,8 +30,8 @@ There is a single access point to request data:
 https://climrisk.org/edb/api/combined_data
 
 Access will require a token which identifies the user. 
-However, a "public token" will be available for the duration of the review of a paper which makes use of this
-data: [Marbaix et al. (2024)](#1). The public token will be (or is) available in the Supplement to this paper.
+However, a "public token" will be available for the duration of the review of [Marbaix et al. (2024)](#1),
+in the Supplement S1 to this paper.
 
 Requests may include one or more of the 'filter' parameters (search criteria) presented in section 4.
 When data is requested through the API, the filtering is handled by PostgreSQL's text search functions. 
@@ -88,7 +88,7 @@ Notes:
   (section 2) while possibly extending it, the name and details of 'helper' functions provided here could change in the future.
   These are provided as tools to reproduce the figures in [Marbaix et al. (2024b)](#2) as well as examples.
 - `jsonfile_get` filters the embers with a view to follow the same approach as in the online API, but 
-  it does not use the exact same code: it is based on python filtering, while the API relies on PostgreSQL
+  it does not use the exact same code: filtering is done within Python, while the API relies on PostgreSQL
   for filtering. When producing the figures for [Marbaix et al. (2024b)](#2), the selection of embers is exactly
   the same with each of these approaches; however, there is no guarantee that it would remain true for any possible 
   search criteria.
@@ -108,6 +108,16 @@ search criteria (filters) within the parameters of the request:
 | scenario   | Restrict to embers which contain the given text in the name of the considered scenario                 | 
 | inclusion  | Restrict to embers which have an inclusion level equal or greater than the given number                | 
 
+For the text search parameters (longname, keywords, source, scenario), boolean operators AND, OR and NOT can be used,
+as for example in
+
+```
+source = "SRCCL OR SR1.5 OR SROCC"
+keywords = "('ecosystem services' OR NOT 'ecosystems') AND NOT 'RFC'"
+```
+In this example, the keyword search will exclude the Reasons for concern (RFC) and include everthing else
+which is "related to human systems": either it does not include the keyword "ecosystems", or it is part of the
+more specific keyword 'ecosystem services'. Other examples are provided in `settings_configs.py`.
 
 ## References
 <a id="1">Marbaix et al. (2024)</a>

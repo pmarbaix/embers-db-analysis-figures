@@ -6,7 +6,8 @@ Note: this code was tested with python 3.11 and 3.12.
 
 ## Basic use
 
-- Create a python virtual environment and get the project file, such as by using git clone.
+- Create a python virtual environment and get the project files, such as by using 
+  `git clone https://github.com/pmarbaix/EDB_paper.git`
 
 - Run ```pip install -r requirements.txt```
 

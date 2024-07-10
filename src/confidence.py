@@ -53,7 +53,7 @@ def confidence(**kwargs):
             # Additional investigation: list embers in the "low confidence" bin:
             lowconf = [be.longname for be in bes if be.trans[itr].confidence_index < 1.5]
             hlp.report.write(f"Embers for which transition {itr} is assessed with low confidence:")
-            hlp.report.write(f"{'\n'.join(lowconf)}")
+            hlp.report.write('\n'.join(lowconf))
 
             tableout.table_write(f"{itr}", f"{np.mean(haz):.2f} ({haz50})", f"{np.mean(confs):.2f}",
                                  *[str(h) for h in hist[0]],

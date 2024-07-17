@@ -105,7 +105,7 @@ def riskchart(lbes, dset=None, ax=None, istart=0, data=None):
         ax.text(-3.85,  istart + len(lbes) + 0.5, dset['name'], fontsize=7, color=curcolor,
                 verticalalignment='top')
 
-    hlp.report.write(f"Larges risk change wrt. GMT ({dset['GMT'][0]}->{dset['GMT'][2]}°C) for:")
+    hlp.report.write(f"Large risk change wrt. GMT ({dset['GMT'][0]}->{dset['GMT'][2]}°C) for:")
     for ibe, be in enumerate(lbes):
 
         i0, c0 = hlp.rfn(be, dset['GMT'][0], conf=True)

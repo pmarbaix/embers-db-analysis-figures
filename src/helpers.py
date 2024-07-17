@@ -127,18 +127,25 @@ def stringmatch(criteria, text):
     """
     Returns True if the string matches the given criteria.
     For example, criteria "fox AND NOT dog" would return False on "The quick brown fox... the lazy dog".
-    Supported are: AND, OR, NOT (upper case), quotes ('') and brackets
+    Supported are: AND, OR, NOT (upper case), quotes ('') and brackets (&,|,! are not supported).
     Example of complex criteria: "ecosystems AND NOT ('ecosystem services' OR fishing OR aquaculture)"
+    Notes:
+    - the search is NOT case-sensitive.
+    - the search looks for words: "Arctic" or "New" are NOT in "Antarctica and New-Zealand".
+
     :param text: the text to check for matches according to the criteria
     :param criteria: the search criteria
     :return:
     """
     if not criteria:
         return True
+    if '!' in criteria or '&' in criteria or '|' in criteria:
+        raise Exception('Stringmatch: &,|,! are not allowed; please use the AND/OR/NOT syntax for boolean operators')
+
     # Parse the criteria to get a list of tuples: [(<string to find>,<operator>), ...]
     pexp = re.findall(r"(|\b[^']*?\b|\'.*?\') *(\(|\)|\bAND\b|\bOR\b|\bNOT\b|$)", criteria)
     lstr = ""
-    text = text.lower()
+    text = text.lower().translate(str.maketrans(',.;\n', '    ')).split(" ")
     for ex in pexp:
         tx = ex[0].strip().strip("'")
         if tx:
@@ -149,13 +156,14 @@ def stringmatch(criteria, text):
     try:
         return eval(lstr)
     except SyntaxError:
-        logging.fatal(f"Stringmatch failed to apply '{criteria}' to '{text}'")
-        exit()
+        raise Exception(f"Stringmatch failed to apply '{criteria}' to '{text}'")
 
 
 def jsonfile_get(filename, **kwargs):
     """
     Returns the filtered content of a json file according to the combination of criteria defined in dset
+    Search/filter expressions may contain the boolean operators AND/OR/NOT, but cannot use &/|/!.
+
     :param filename: Full name of the json input file
     :keyword: Search/filter criteria (see Embers_retreive_API.md).
                      In this software, it is usually provided as part of the 'data set parameters' (dset).
@@ -173,37 +181,37 @@ def jsonfile_get(filename, **kwargs):
     # If ember ids were provided, get the list of corresponding embers;
     # Unlike the other filter criteria, emberids *add* embers to the retained set => temporarily stored in 'bes'
     if "emberids" in kwargs:
-        src = kwargs["emberids"].split('-')
-        bes = [be for be in jsondata["embers"] if str(be["id"]) in src]
+        filt = kwargs["emberids"].split('-')
+        bes = [be for be in jsondata["embers"] if str(be["id"]) in filt]
     else:
         bes = None  # list of embers to add after filtering.
 
     # Filter the received embers according to the other criteria (each criteria reduces the selected set)
     filtered = False
     if "longname" in kwargs:
-        src = kwargs["longname"]
-        jsondata["embers"] = [be for be in jsondata["embers"] if stringmatch(src, be["longname"])]
+        filt = kwargs["longname"]
+        jsondata["embers"] = [be for be in jsondata["embers"] if stringmatch(filt, be["longname"])]
         filtered = True
 
     if "source" in kwargs:
-        src = kwargs["source"]
+        filt = kwargs["source"]
         figs = jsondata["figures"]
-        figids = [fig["id"] for fig in figs if stringmatch(src, fig["biblioreference.cite_key"])]
-        if stringmatch(src, ""):
+        figids = [fig["id"] for fig in figs if stringmatch(filt, fig["biblioreference.cite_key"])]
+        if stringmatch(filt, ""):
             figids.append(None)
         jsondata["embers"] = [be for be in jsondata["embers"] if be["mainfigure_id"] in figids]
         filtered = True
 
     if "keywords" in kwargs:
-        kws = kwargs["keywords"]
-        jsondata["embers"] = [be for be in jsondata["embers"] if stringmatch(kws, be["keywords"])]
+        filt = kwargs["keywords"]
+        jsondata["embers"] = [be for be in jsondata["embers"] if stringmatch(filt, be["keywords"])]
         filtered = True
 
     if "scenario" in kwargs:
-        scf = kwargs["scenario"]
+        filt = kwargs["scenario"]
         scens = jsondata["scenarios"]
-        scids = [scen["id"] for scen in scens if stringmatch(scf, scen["name"])]
-        if stringmatch(scf, ""):
+        scids = [scen["id"] for scen in scens if stringmatch(filt, scen["name"])]
+        if stringmatch(filt, ""):
             scids.append(None)
         jsondata["embers"] = [be for be in jsondata["embers"] if be["scenario_id"] in scids]
         filtered = True

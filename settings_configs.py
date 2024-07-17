@@ -13,7 +13,7 @@ from copy import deepcopy
 import inspect
 
 
-def get_settings(settings_choice: str = None, options: list = None, title=None):
+def get_settings(settings_choice: str = None, options: list = None, title=None, nameprefix=""):
     """
     Get settings from edb_paper_settings, selecting a configuration from python call args or CLI.
     :param settings_choice: the name of the desired settings
@@ -22,6 +22,7 @@ def get_settings(settings_choice: str = None, options: list = None, title=None):
       - mean: whether to calculate mean values
       - ...
     :param title: A title for the diagram
+    :param nameprefix: a prefix for the file name, such as a short figure identifier
     :returns: selected settings (dict)
     """
     type = inspect.stack()[1][3]  # The 'type' of diagram is the name of the function calling get_settings
@@ -156,7 +157,7 @@ def get_settings(settings_choice: str = None, options: list = None, title=None):
                  "name": "\n\nOcean and coastal \n ecosystems",
                  "color": (0, 0, 0.8)},
                 {"source": "AR6-WGII-Chapter2 OR AR6-WGII-Chapter7 OR SRCCL OR SR1.5-Chapter3 OR SROCC",
-                 "keywords": "(!ecosystems OR 'ecosystem services' OR 'human') AND NOT RFC",
+                 "keywords": "(NOT ecosystems OR 'ecosystem services' OR 'human') AND NOT RFC",
                  "longname": "NOT 'Arctic:' AND NOT 'permafrost degradation'",  # Moved to the regional figure below
                  "name": "\nHuman systems\nand ecosystem services",
                  "color": (0.8, 0.0, 0.1)},
@@ -216,7 +217,9 @@ def get_settings(settings_choice: str = None, options: list = None, title=None):
     # Define outfile for easy identification of the settings within f name.
     if 'out_file' not in selected_settings:
         selected_settings['out_file'] = settings_choice
-    selected_settings['out_file'] += '_' + type + (('_' + options_str) if options_str else '')
+    selected_settings['out_file'] = (nameprefix.strip() + "_"
+                                     + selected_settings['out_file'] + "_"
+                                     + type + (('_' + options_str) if options_str else ''))
 
     # Title
     if title:

@@ -6,13 +6,19 @@ API_URL = None
 TOKEN = None
 
 if datasource == "remote":
+    # Remote API
     API_URL = "https://climrisk.org/edb"
     TOKEN = "<your-token-on-climrisk-for-edb>"
+
 elif datasource == "local":
+    # Local development server
     API_URL = "http://localhost:8000/edb"
     TOKEN = "<local-token>"
     print("WARNING: getting data from the LOCAL (test) database")
+
 elif datasource == "file":
+    # Archive file
     FILE = "embers-archive-2024.json"
+
 else:
     raise Exception("'datasource' must be 'local', 'remote' or 'file")

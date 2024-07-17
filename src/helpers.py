@@ -166,9 +166,9 @@ def jsonfile_get(filename, **kwargs):
 
     # Filtering based on the inclusion_level is done first, because embers removed here can't be re-introduced
     # even by explicitly required them trough providing their id in 'emberids' below (same rule as in the API).
-    if "inclusion" in kwargs:
-        ilev = int(kwargs["inclusion"])
-        jsondata["embers"] = [be for be in jsondata["embers"] if int(be["inclusion_level"]) >= ilev]
+    # Note: bug fix on 17 July 2024 = add default inclusion level = 0, as done in the API (this was missing for files)
+    ilev = int(kwargs["inclusion"]) if "inclusion" in kwargs else 0
+    jsondata["embers"] = [be for be in jsondata["embers"] if int(be["inclusion_level"]) >= ilev]
 
     # If ember ids were provided, get the list of corresponding embers;
     # Unlike the other filter criteria, emberids *add* embers to the retained set => temporarily stored in 'bes'

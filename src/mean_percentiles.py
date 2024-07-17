@@ -37,7 +37,7 @@ def mean_percentiles(**kwargs):
         # Prepare figure
         ax.set(xlabel='Global mean temperature change (GMT)')
         ax.set_title(dset["title"], pad=36, fontsize=9)
-        plt.subplots_adjust(top=0.86, left=0.2, right=0.98)
+        plt.subplots_adjust(top=0.84, left=0.2, right=0.98)
         plt.ylim((-0.1, 3.1))
 
         # Optionally remove embers that are not "complete" = which were not assessed for the full range of hazlevs
@@ -111,7 +111,7 @@ def mean_percentiles(**kwargs):
         agr = EmberGraph(outfile, grformat="PDF")
         agr.gp['haz_name_std'] = 'GMT'  # Needed because it is set for the ember (above)
         agr.gp['haz_axis_top'] = 4.0
-        agr.gp['gr_fnt_size'] = 10
+        agr.gp['gr_fnt_size'] = 9
         agr.gp['conf_lines_ends'] = 'bar'  # 'bar', 'arrow', or 'datum' (or None)
         agr.gp['leg_pos'] = 'none'  # No risk levels legend
         agr.add(aggreg_bes)

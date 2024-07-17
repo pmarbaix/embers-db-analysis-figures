@@ -333,7 +333,7 @@ def extractdata(jsondata, conv_gmt: str = 'compulsory'):
 
         conv_log = logger.getlog(0)
         if conv_log:
-            report.write(f"Unit conversion log:\n {'<br> '.join(conv_log)}")
+            report.write(f"Variable conversion log:\n {'<br> '.join(conv_log)}")
     logging.info(f"ExtractData: Retained {len(lbes)} ember(s) after conversion to GMT.")
     if len(lbes) == 0:
         raise LookupError("ExtractData: no ember matches the provided criteria")

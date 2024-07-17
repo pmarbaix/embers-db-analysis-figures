@@ -157,7 +157,7 @@ def jsonfile_get(filename, **kwargs):
     """
     Returns the filtered content of a json file according to the combination of criteria defined in dset
     :param filename: Full name of the json input file
-    :param **kwargs: Search/filter criteria (see Embers_retreive_API.md).
+    :keyword: Search/filter criteria (see Embers_retreive_API.md).
                      In this software, it is usually provided as part of the 'data set parameters' (dset).
     :return: A dict of ember-related data, containing embers and other data read from the input file.
     """

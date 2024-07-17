@@ -6,6 +6,7 @@ from embermaker.embergraph import EmberGraph
 from embermaker import ember as emb
 from itertools import groupby
 
+
 def mean_percentiles(**kwargs):
     """
     Cumulative distribution of mid-points within transitions.
@@ -28,7 +29,7 @@ def mean_percentiles(**kwargs):
 
     # Loop over data subsets (defined in the settings)
     for dset in hlp.DSets(settings):
-        hlp.report.write(f"Source {dset[('idset')]}: {dset['name']}", title=1)
+        hlp.report.write(f"Source {dset['idset']}: {dset['name']}", title=1)
 
         # Get data for the current subset (dset)
         data = hlp.getdata(dset)
@@ -161,7 +162,7 @@ def aggreg(lbes, hazlevs: np.array, ax=None, dset=None, exprisk=False, figures=N
                 be_groups[be.id] = figinfo['biblioreference.cite_key']
 
         groups_list = list(be_groups.values())
-        for group_key, be_set in groupby(lbes, lambda be: be_groups[be.id]):
+        for group_key, be_set in groupby(lbes, lambda xbe: be_groups[xbe.id]):
             weight = 1.0 / groups_list.count(group_key)
             names = ""
             for be in be_set:
@@ -174,6 +175,7 @@ def aggreg(lbes, hazlevs: np.array, ax=None, dset=None, exprisk=False, figures=N
 
     # Calculate mean and percentiles among all embers, for each hazard level (x axis values)
     extend = []
+    exclude = []
     for lev, hazl in enumerate(hazlevs):
         # For each hazard level, lists of ember-related data will be generated for the 'included' embers (see below)
         risk_hazl = []
@@ -186,6 +188,7 @@ def aggreg(lbes, hazlevs: np.array, ax=None, dset=None, exprisk=False, figures=N
             # With or without weighting (weight=1), 'removing' embers does not change the weight of other embers
             #   (figures share the same haz_valid[1]: in most cases, all embers of a group are removed together).
             trmax = np.max(be.levels_values('hazl'))
+            # Process included embers
             if max(trmax, be.haz_valid[1]) >= hazl:
                 if hazl > be.haz_valid[1] and be.id not in extend:
                     hlp.report.write(f"Extended validity for ember '{be.longname}': {be.haz_valid[1]} -> {trmax}")
@@ -199,6 +202,12 @@ def aggreg(lbes, hazlevs: np.array, ax=None, dset=None, exprisk=False, figures=N
                 risk_hazl.append(intrisk)
                 weights.append(be.ext['weight'])
                 names.append(be.longname)
+            # Record information about embers no longer included as this hazard level:
+            elif be.id not in exclude:
+                hlp.report.write(
+                    f"Ignoring {be.longname} for hazard >= {hazl:.2f} (trmax: {trmax}, haz_valid[1]: {be.haz_valid[1]})"
+                )
+                exclude.append(be.id)
 
         rmean_std.append(np.std(risk_hazl)/np.sqrt(len(lbes)))
 

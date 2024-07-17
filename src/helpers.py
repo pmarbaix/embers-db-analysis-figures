@@ -252,7 +252,7 @@ def getdata(dset, as_embers=True, desc=False):
         response = jsonfile_get(FILE, **dset)
 
     if response.ok:
-        report.write(f"Data received from: {API_URL}")
+        report.write(f"Data received from: {API_URL if API_URL else FILE}")
     else:
         try:
             rd = json.loads(response.content)

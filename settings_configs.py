@@ -13,19 +13,21 @@ from copy import deepcopy
 import inspect
 from os import path, makedirs
 
+
 def get_settings(settings_choice: str = None, options: list = None, title=None, out_path=None):
     """
     Get settings from edb_paper_settings, selecting a configuration from python call args or CLI.
+
     :param settings_choice: the name of the desired settings
     :param options: a list of options, added to the returned settings
       - wchapter: apply figure+chapter weighting (if unset, all embers have the same weight)
       - mean: whether to calculate mean values
       - ...
     :param title: A title for the diagram
-    :param nameprefix: a prefix for the file name, such as a short figure identifier
+    :param out_path: the base path for the output files
     :returns: selected settings (dict)
     """
-    type = inspect.stack()[1][3]  # The 'type' of diagram is the name of the function calling get_settings
+    dtype = inspect.stack()[1][3]  # The 'type' of diagram is the name of the function calling get_settings
     options = options if options else []
     options_str = '-'.join(options) if options else ''
 
@@ -84,7 +86,7 @@ def get_settings(settings_choice: str = None, options: list = None, title=None, 
                       ],
             "title": "Africa(black), Australasia(blue), Europe(red), North-America(orange), Mediterranean(green),"
                      "Polar regions(grey)",
-            "out_file": f"compare_regional_{type}",
+            "out_file": f"compare_regional_{dtype}",
         },
         "ecosystems_low-adapt_high-adapt": {  # Paper
             "source": " SR1.5-Chapter3 OR SRCCL OR SROCC OR AR6-WGII-Chapter2 OR AR6-WGII",
@@ -216,12 +218,12 @@ def get_settings(settings_choice: str = None, options: list = None, title=None, 
 
     # Define outfile for easy identification of the settings within f name.
     if 'out_file' in selected_settings:
-        basename = "_" + selected_settings["out_file"].strip()
+        basename = selected_settings["out_file"].strip()
     else:
         basename = "_" + settings_choice.strip()
     out_path = out_path if out_path else "./out/fig"
-    settings_in_filename = "_" + type + (('_' + options_str) if options_str else '')
-    selected_settings['out_file'] = (out_path + basename + settings_in_filename).replace(' ','')
+    settings_in_filename = "_" + dtype + (('_' + options_str) if options_str else '')
+    selected_settings['out_file'] = (out_path + basename + settings_in_filename).replace(' ', '')
 
     # Title
     if title:
@@ -234,7 +236,7 @@ def get_settings(settings_choice: str = None, options: list = None, title=None, 
     if not path.exists(outdir):
         makedirs(outdir)
 
-    selected_settings['type'] = type
+    selected_settings['type'] = dtype
     selected_settings['options'] = options
 
     return selected_settings

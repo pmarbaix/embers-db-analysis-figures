@@ -50,13 +50,13 @@ def make_figures(figures=None, out_path=None):
     fig = '5c'
     if fig in figures or all:
         cumulative(settings_choice="SRs+AR6noRFCnoHighAdapt", out_path=join(out_path,fig),
-                   title="Figure 5(c) - alt.: Cumulative distribution of\n"
+                   title="Figure 5(c): Cumulative distribution of\n"
                   "transitions mid-points (AR6+SRs, excl. RFCs & high adapt.)")
 
     fig = '5c-alt'
     if fig in figures or all:
         cumulative(settings_choice="SRs+AR6noRFC", out_path=join(out_path,fig),
-                   title="Cumulative distribution of\ntransitions mid-points (AR6+SRs, excl. RFCs)")
+                   title="Figure 5(c) - ALT:Cumulative distribution of\ntransitions mid-points (AR6+SRs, excl. RFCs)")
 
     fig = '5e'
     if fig in figures or all:

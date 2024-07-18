@@ -220,10 +220,11 @@ def get_settings(settings_choice: str = None, options: list = None, title=None, 
     if 'out_file' in selected_settings:
         basename = selected_settings["out_file"].strip()
     else:
-        basename = "_" + settings_choice.strip()
+        basename = settings_choice.strip()
     out_path = out_path if out_path else "./out/fig"
     settings_in_filename = "_" + dtype + (('_' + options_str) if options_str else '')
-    selected_settings['out_file'] = (out_path + basename + settings_in_filename).replace(' ', '')
+    separname = "_" if path.split(out_path)[1] else ""
+    selected_settings['out_file'] = (out_path + separname + basename + settings_in_filename).replace(' ', '')
 
     # Title
     if title:

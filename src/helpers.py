@@ -10,7 +10,7 @@ from matplotlib import colors
 import logging
 from bisect import bisect_right
 from settings_data_access import API_URL, TOKEN, FILE
-from os import path
+from os import path, makedirs
 import re
 
 # Create a dumb ember graph because this provides access to the risk level index (e.g. for interpolation);
@@ -131,7 +131,10 @@ def stringmatch(criteria, text):
     Example of complex criteria: "ecosystems AND NOT ('ecosystem services' OR fishing OR aquaculture)"
     Notes:
     - the search is NOT case-sensitive.
-    - the search looks for words: "Arctic" or "New" are NOT in "Antarctica and New-Zealand".
+    - the search looks for words: "Arctic" is NOT in "Antarctica", however "Chapter19" is in "AR6-WGII-Chapter19"
+      (because that is the same as the PostgreSQL text search used by the remote API)
+    - plural and singular are considered equivalent, again because PostgreSQL does this.
+      (implementation might be a bit rough: it just ignores the character 's' when at end of a word)
 
     :param text: the text to check for matches according to the criteria
     :param criteria: the search criteria
@@ -145,11 +148,21 @@ def stringmatch(criteria, text):
     # Parse the criteria to get a list of tuples: [(<string to find>,<operator>), ...]
     pexp = re.findall(r"(|\b[^']*?\b|\'.*?\') *(\(|\)|\bAND\b|\bOR\b|\bNOT\b|$)", criteria)
     lstr = ""
-    text = text.lower().translate(str.maketrans(',.;\n', '    ')).split(" ")
+    # Character 'translation' tool to replace all white spaces with standard spaces
+    blanks = str.maketrans("\t\n\r\x0b\x0c\xa0", "      ")
+    # Regex to insert blanks as word boundaries
+    wordbounds = r'([.,;-])'
+    # Get string to search within, with all word boundaries
+    ptext = " " + re.sub(wordbounds, r' \1 ',text).translate(blanks).lower() + " "
+    # Ignore plural forms = just remove 's' when at end of a word.
+    ptext = ptext.replace("s ", " ")
     for ex in pexp:
-        tx = ex[0].strip().strip("'")
+        # Get a fragment of the search expression to look for in text
+        tx = ex[0].lower().translate(blanks).strip().strip("'")
         if tx:
-            fnd = str(tx.lower() in text) + " "
+            # apply to the search fragment the same processing as for text:
+            tx = re.sub(wordbounds, r' \1 ', f" {tx} ").replace("s ", " ")
+            fnd = str(tx in ptext) + " "
         else:
             fnd = ""
         lstr += " " + fnd + ex[1].lower()
@@ -196,7 +209,13 @@ def jsonfile_get(filename, **kwargs):
     if "source" in kwargs:
         filt = kwargs["source"]
         figs = jsondata["figures"]
-        figids = [fig["id"] for fig in figs if stringmatch(filt, fig["biblioreference.cite_key"])]
+        bibrefs = jsondata["biblioreferences"]
+        bibids = [bib["id"] for bib in bibrefs if stringmatch(filt, bib["cite_key"])]
+        # Follow relations
+        # (done for consistency with remote API; in practice starting from the crossref might not be needed
+        #  because the search function 'stringmatch' would find the parent reference in the cite-key)
+        bibids = [bib["id"] for bib in bibrefs if bib["crossref_id"] in bibids or bib["id"] in bibids]
+        figids = [fig["id"] for fig in figs if fig["biblioreference_id"] in bibids]
         if stringmatch(filt, ""):
             figids.append(None)
         jsondata["embers"] = [be for be in jsondata["embers"] if be["mainfigure_id"] in figids]
@@ -216,9 +235,10 @@ def jsonfile_get(filename, **kwargs):
         jsondata["embers"] = [be for be in jsondata["embers"] if be["scenario_id"] in scids]
         filtered = True
 
+    # Assemble the outputs from the two filterings (see above: emberids results add to the other filtered results)
     if bes:
         if filtered:
-            jsondata["embers"] = jsondata["embers"] + [be for be in bes if be not in jsondata["embers"]]
+            jsondata["embers"] = [be for be in bes if be not in jsondata["embers"]] + jsondata["embers"]
         else:
             jsondata["embers"] = bes
 
@@ -583,7 +603,12 @@ class Report:
 
 def report_start(settings):
     global report
-    report = Report(f"out/{settings['out_file']}")
+    dir, file = path.split(settings['out_file'])
+    repfile = path.join(dir, 'reports', file)
+    repdir  = path.split(repfile)[0]
+    if not path.exists(repdir):
+        makedirs(repdir)
+    report = Report(repfile)
     title = settings['title'].replace('\n', ' ')
     report.write(f"{title}", title=1)
 

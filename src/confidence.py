@@ -13,7 +13,7 @@ def confidence(**kwargs):
     hlp.report_start(settings)
 
     # Create the summary table (Simple md files are crated by the small "Report" class)
-    tableout = hlp.Report('out/' + settings['out_file'] + '_out.md')
+    tableout = hlp.Report(settings['out_file'] + '_out.md')
     bins = 0.5 + np.arange(5)
     tableout.write(f"Confidence range bins limits: {bins}")
 

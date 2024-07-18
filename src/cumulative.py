@@ -79,6 +79,6 @@ def cumulative(**kwargs):
            title=settings["title"])
 
     plt.rcParams['svg.fonttype'] = 'none'
-    fig.savefig(f"out/{settings['out_file']}.pdf", format="pdf")
+    fig.savefig(f"{settings['out_file']}.pdf", format="pdf")
     plt.show()
     hlp.report.close()

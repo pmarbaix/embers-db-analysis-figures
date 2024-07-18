@@ -17,7 +17,7 @@ def get_fig_sortkey(biblioreferences):
         figkeys = fignum.split(".")
         figinrep = figkeys[1] if len(figkeys) > 1 else 0
         figinrep = int(re.sub('[^0-9]', '', str(figinrep)))
-        rep = [br for br in biblioreferences if br['cite_key'] == fig['biblioreference.cite_key']][0]
+        rep = [br for br in biblioreferences if br['cite_key'] == fig['biblioreference_cite_key']][0]
         chapter = rep['chapter']
         if chapter is None: # Try to get an integer from the first part of the figure number
             try: # Reject CCPs ect. et end of list, after chapters
@@ -64,7 +64,7 @@ def embers_table(**kwargs):
     fig_sortkey = get_fig_sortkey(biblioreferences)
     figures.sort(key=fig_sortkey)
     # Create the summary table (Simple md files are crated by the small "Report" class)
-    tableout = hlp.Report('out/'+settings['out_file']+'_out.md')
+    tableout = hlp.Report(settings['out_file']+'_out.md')
     tableout.table_head("Report: main figure", "*shortname* <br/> (title)", "#other adapt.", "#high adapt.", "#total",
                         "High risk at mean T (min, max)")
 
@@ -76,7 +76,7 @@ def embers_table(**kwargs):
     # Loop over figures = lines in the summary table
     hlp.report.table_head("Report", "Figure number", "Source")
     for fig in figures:
-        hlp.report.table_write(fig['biblioreference.cite_key'], fig['number'], fig['biblioreference'])
+        hlp.report.table_write(fig['biblioreference_cite_key'], fig['number'], fig['biblioreference'])
         be_ids = [be.id for be in embers if be.meta['mainfigure_id'] == fig['id'] ]
         n_other_adap = 0
         n_high_adap = 0
@@ -109,7 +109,7 @@ def embers_table(**kwargs):
             hr_message = f" {np.mean(hr_mid):5.2f} ({hr_bot:4.2f}-{hr_top:4.2f})"
         else:
             hr_message = f"Not temperature {list(be_haz_names)}"
-        tableout.table_write(f"{fig['biblioreference.cite_key']}:<br/> fig. {fig['number']}",
+        tableout.table_write(f"{fig['biblioreference_cite_key']}:<br/> fig. {fig['number']}",
                              f"*{fig['shortname']}* <br/> ({fig['title']})",
                              n_other_adap, n_high_adap, c_all, hr_message)
         gt_o_adap += n_other_adap

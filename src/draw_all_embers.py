@@ -23,7 +23,7 @@ def draw_all_embers(**kwargs):
 
     # Save to file, for information / backup
     received_json = json.dumps(data, indent=4, ensure_ascii=False)
-    with open(f"out/{dset['out_file']}_embers.json", "w", encoding='utf8') as outfile:
+    with open(f"{dset['out_file']}_embers.json", "w", encoding='utf8') as outfile:
        outfile.write(received_json)
 
     # Convert hazard metric to GMST if possible, otherwise remove the ember
@@ -37,7 +37,7 @@ def draw_all_embers(**kwargs):
     print(f"#embers: {len(lbes)}; request: {data['filters']}")
 
     # Create an ember graph
-    outfile = (f"out/{dset['out_file']}_embers.svg")
+    outfile = (f"{dset['out_file']}_embers.svg")
 
     egr = EmberGraph(outfile, grformat="SVG")
 

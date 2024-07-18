@@ -64,7 +64,7 @@ def overview(**kwargs):
     hlp.report.write(f"GMT levels shown: {settings['GMT']}")
 
     plt.rcParams['svg.fonttype'] = 'none'
-    fig.savefig(f"out/{settings['out_file']}.pdf", format="pdf")
+    fig.savefig(f"{settings['out_file']}.pdf", format="pdf")
     plt.show()
     hlp.report.close()
 
@@ -118,7 +118,7 @@ def riskchart(lbes, dset=None, ax=None, istart=0, data=None):
         gid = be.meta['scenariogroup_id']
         plt.hlines(ebpos, 0, 3, color="#AAA", linewidths=0.3)
         name = ""
-        citekey = hlp.dict_by_id(figures, be.meta['mainfigure_id'])['biblioreference.cite_key']
+        citekey = hlp.dict_by_id(figures, be.meta['mainfigure_id'])['biblioreference_cite_key']
         convcite = {'AR6': 'A6', 'SR1': '1.5', 'SRO': 'O', 'SRC': 'L'}
         name_sfx = f'[{convcite[citekey[0:3]]}]' if 'hide_chapter' not in dset else ''
         if gid is None:

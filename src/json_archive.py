@@ -13,7 +13,7 @@ def json_archive(settings_choice="All_inclusion-OK"):
     To get strictly all embers, set the 'inclusion' parameter to -3, within settings_configs.py (see config "Full").
     """
     # Get settings from edb_paper_settings, according to the choices made in keyword arguments (see getsettings)
-    settings = settings_configs.get_settings(settings_choice=settings_choice)
+    settings = settings_configs.get_settings(settings_choice=settings_choice, out_path="./out/")
 
     # Get data for the current subset and the list of burning embers
     # as_embers = False => do not convert the data to Ember objects (keep JSON-like)
@@ -21,7 +21,7 @@ def json_archive(settings_choice="All_inclusion-OK"):
     data = hlp.getdata(settings, as_embers=False, desc=True)
 
     # Write JSON file
-    hlp.jsonfile_save(f"out/{settings['out_file']}", data)
+    hlp.jsonfile_save(settings['out_file'], data)
 
 if __name__ == "__main__":
     json_archive(settings_choice=argv[1])

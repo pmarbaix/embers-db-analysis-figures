@@ -16,12 +16,14 @@ from src.cumulative import cumulative
 from src.overview import overview
 from src.embers_table import embers_table
 from src.confidence import confidence
-from os import path, makedirs
+from settings_data_access import datasource
+from os.path import join
 
 # Default list of figures to build:
-do_figures = ['8']
+do_figures = ['5a']
 
-def make_figures(figures=None):
+
+def make_figures(figures=None, out_path=None):
     all = False
     if not figures:
         figures = do_figures
@@ -30,83 +32,84 @@ def make_figures(figures=None):
     else:
         figures = [figures]
 
-    # Output is written in subdirectory 'out': create if it does not exist
-    if not path.exists("./out"):
-        makedirs("./out")
+    # out_path: the full path including the beginning of the file name, which will be extended
+    if not out_path:
+        out_path = f"./out/{datasource}/"
 
     fig = '5a'
     if fig in figures or all:
-        mean_percentiles(settings_choice="SRs+AR6_global_regional", options=['mean', 'median', 'ember'], nameprefix=fig,
-            title="Figure 5(a)+(d): Global vs reg. mean & med.(AR6+SRs, excl. high adapt. and RFCs)")
+        mean_percentiles(settings_choice="SRs+AR6_global_regional", options=['mean', 'median', 'ember'],
+                         out_path=join(out_path,fig),
+                         title="Figure 5(a)+(d): Global vs reg. mean & med.(AR6+SRs, excl. high adapt. and RFCs)")
 
     fig = '5b'
     if fig in figures or all:
-        mean_percentiles(settings_choice="SRs+AR6_global_regional", options=['p10-p90'], nameprefix=fig,
-            title="Figure 5(b): Global vs regional p10 & p90 (AR6+SRs, excluding high adapt. and RFCs)")
+        mean_percentiles(settings_choice="SRs+AR6_global_regional", options=['p10-p90'], out_path=join(out_path,fig),
+                         title="Figure 5(b): Global vs regional p10 & p90 (AR6+SRs, excluding high adapt. and RFCs)")
 
     fig = '5c'
     if fig in figures or all:
-        cumulative(settings_choice="SRs+AR6noRFCnoHighAdapt", nameprefix=fig,
-            title="Figure 5(c) - alt.: Cumulative distribution of\n"
+        cumulative(settings_choice="SRs+AR6noRFCnoHighAdapt", out_path=join(out_path,fig),
+                   title="Figure 5(c) - alt.: Cumulative distribution of\n"
                   "transitions mid-points (AR6+SRs, excl. RFCs & high adapt.)")
 
     fig = '5c-alt'
     if fig in figures or all:
-        cumulative(settings_choice="SRs+AR6noRFC", nameprefix=fig,
-            title="Cumulative distribution of\ntransitions mid-points (AR6+SRs, excl. RFCs)")
+        cumulative(settings_choice="SRs+AR6noRFC", out_path=join(out_path,fig),
+                   title="Cumulative distribution of\ntransitions mid-points (AR6+SRs, excl. RFCs)")
 
     fig = '5e'
     if fig in figures or all:
         mean_percentiles(settings_choice="SRs+AR6_global_regional", options=['mean', 'median', 'ember', 'wchapter'],
-            nameprefix=fig, title="Figure 5(e)+(f) - Global vs regional + chapter weighting")
+                         out_path=join(out_path,fig), title="Figure 5(e)+(f) - Global vs regional + chapter weighting")
 
     fig = '6'
     if fig in figures or all:
         mean_percentiles(settings_choice="ecosystems_low-adapt_high-adapt", options=['mean', 'median', 'ember'],
-            nameprefix=fig,
-            title="Figure 6(a)+(b): Ecosystems - others w/o high adapt. - others with high adapt. (AR6+SRs)")
+                         out_path=join(out_path,fig),
+                         title="Figure 6(a)+(b): Ecosystems - others w/o high adapt. - others with high adapt. (AR6+SRs)")
 
     fig = '6c'
     if fig in figures or all:
-        mean_percentiles(settings_choice="SRs_vs_AR6-ecosystems", options=['mean', 'median'], nameprefix=fig,
-            title="Figure 6(c): Ecosystems: compare SRs to AR6")
+        mean_percentiles(settings_choice="SRs_vs_AR6-ecosystems", options=['mean', 'median'], out_path=join(out_path,fig),
+                         title="Figure 6(c): Ecosystems: compare SRs to AR6")
 
     fig = '6d'
     if fig in figures or all:
-        mean_percentiles(settings_choice="SRs_vs_AR6-others-no_high-adapt", options=['mean', 'median'], nameprefix=fig,
-            title="Figure 6(d): Other systems: compare SRs to AR6")
+        mean_percentiles(settings_choice="SRs_vs_AR6-others-no_high-adapt", options=['mean', 'median'],
+                         out_path=join(out_path,fig),
+                         title="Figure 6(d): Other systems: compare SRs to AR6")
 
     fig = '6c-sup'
     if fig in figures or all:
         mean_percentiles(settings_choice="ecosystems_low-adapt_high-adapt_AR6", options=['mean', 'median'],
-            nameprefix=fig,
-            title="Figure 6(sup2): compare SRs to AR6 for human systems\n and ecosystem services, no/mod adaptation")
+                         out_path=join(out_path,fig),
+                         title="Figure 6(sup2): compare SRs to AR6 for human systems\n and ecosystem services, no/mod adaptation")
 
     fig = '7'
     if fig in figures or all:
-        overview(settings_choice="overview_systems", nameprefix=fig,
-            title="Figure 7: Overview - systems")
+        overview(settings_choice="overview_systems", out_path=join(out_path,fig),
+                 title="Figure 7: Overview - systems")
 
     fig = '8'
     if fig in figures or all:
-        overview(settings_choice="overview_regions", nameprefix=fig,
-            title="Figure 8: Overview - regional")
+        overview(settings_choice="overview_regions", out_path=join(out_path,fig),
+                 title="Figure 8: Overview - regional")
 
     fig = '8-sup'
     if fig in figures or all:
-        overview(settings_choice="overview_reg_3.5", nameprefix=fig,
-            title="Figure 8: Overview - regional - 1.5, 2.5, 3.5°C")
+        overview(settings_choice="overview_reg_3.5", out_path=join(out_path,fig),
+                 title="Figure 8: Overview - regional - 1.5, 2.5, 3.5°C")
 
     fig = 'tab2'
     if fig in figures or all:
-        embers_table(settings_choice="All_included", nameprefix=fig,
-            title="Table 2")
+        embers_table(settings_choice="All_included", out_path=join(out_path,fig),
+                     title="Table 2")
 
     fig = 'tab4'
     if fig in figures or all:
-        confidence(settings_choice="SRs+AR6_global_regional", nameprefix=fig,
-            title="Table 4")
-
+        confidence(settings_choice="SRs+AR6_global_regional", out_path=join(out_path,fig),
+                   title="Table 4")
 
     print("Job completed! Note that a 'processing report' is provided with each figure (.md = Markdown format). "
           "\nFor tables, there are two .md files: the table itself + the processing report.")

@@ -108,7 +108,7 @@ def mean_percentiles(**kwargs):
 
     # Create the aggregated ember graph, if embers were created, and draw
     if aggreg_bes and 'ember' in settings['options']:
-        outfile = 'out/ember_' + settings['out_file']
+        outfile = settings['out_file'] + "_ember.pdf"
         agr = EmberGraph(outfile, grformat="PDF")
         agr.gp['haz_name_std'] = 'GMT'  # Needed because it is set for the ember (above)
         agr.gp['haz_axis_top'] = 4.0
@@ -120,7 +120,7 @@ def mean_percentiles(**kwargs):
 
     # Finalise the x-y percentile and/or median plots
     plt.rcParams['svg.fonttype'] = 'none'
-    fig.savefig(f"out/{settings['out_file']}.pdf", format="pdf")
+    fig.savefig(f"{settings['out_file']}.pdf", format="pdf")
     plt.show()
     hlp.report.close()
 
@@ -156,10 +156,10 @@ def aggreg(lbes, hazlevs: np.array, ax=None, dset=None, exprisk=False, figures=N
             # Get information about the main figure containing ember be:
             figinfo: dict = hlp.dict_by_id(figures, be.meta['mainfigure_id'])
             # Generate and set the group label for each ember
-            if figinfo['biblioreference.cite_key'] in ('SRCCL', 'SR1.5'):  # Exception: split by figure
-                be_groups[be.id] = figinfo['biblioreference.cite_key'] + '-' + str(figinfo['number'])
+            if figinfo['biblioreference_cite_key'] in ('SRCCL', 'SR1.5'):  # Exception: split by figure
+                be_groups[be.id] = figinfo['biblioreference_cite_key'] + '-' + str(figinfo['number'])
             else:
-                be_groups[be.id] = figinfo['biblioreference.cite_key']
+                be_groups[be.id] = figinfo['biblioreference_cite_key']
 
         groups_list = list(be_groups.values())
         for group_key, be_set in groupby(lbes, lambda xbe: be_groups[xbe.id]):

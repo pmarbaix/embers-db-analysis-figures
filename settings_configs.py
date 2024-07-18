@@ -11,9 +11,9 @@ the value of each item in this list is a dict using the same keywords as the par
 """
 from copy import deepcopy
 import inspect
+from os import path, makedirs
 
-
-def get_settings(settings_choice: str = None, options: list = None, title=None, nameprefix=""):
+def get_settings(settings_choice: str = None, options: list = None, title=None, out_path=None):
     """
     Get settings from edb_paper_settings, selecting a configuration from python call args or CLI.
     :param settings_choice: the name of the desired settings
@@ -215,17 +215,24 @@ def get_settings(settings_choice: str = None, options: list = None, title=None, 
     selected_settings = settings[settings_choice]
 
     # Define outfile for easy identification of the settings within f name.
-    if 'out_file' not in selected_settings:
-        selected_settings['out_file'] = settings_choice
-    selected_settings['out_file'] = (nameprefix.strip() + "_"
-                                     + selected_settings['out_file'] + "_"
-                                     + type + (('_' + options_str) if options_str else ''))
+    if 'out_file' in selected_settings:
+        basename = "_" + selected_settings["out_file"].strip()
+    else:
+        basename = "_" + settings_choice.strip()
+    out_path = out_path if out_path else "./out/fig"
+    settings_in_filename = "_" + type + (('_' + options_str) if options_str else '')
+    selected_settings['out_file'] = (out_path + basename + settings_in_filename).replace(' ','')
 
     # Title
     if title:
         selected_settings['title'] = title
     elif 'wchapter' in options:
         selected_settings['title'] = selected_settings['title'] + ' (weight/chapter)'
+
+    # Create out directory if it does not exist
+    outdir = path.split(out_path)[0]
+    if not path.exists(outdir):
+        makedirs(outdir)
 
     selected_settings['type'] = type
     selected_settings['options'] = options

@@ -174,7 +174,7 @@ def get_settings(settings_choice: str = None, options: list = None, title=None, 
             "multi": [
                 {"source": "AR6-WGII-CCP6", "color": (0.16, 0, 0.87), "name": "Antarctica",
                     "keywords": "Antarctic"},
-                {"source": "AR6-WGII-Chapter11", "color": (0.2, 0.2, 0.2), "name": "\n\n\nAustralia and New-Zealand"},
+                {"source": "AR6-WGII-Chapter11", "color": (0.2, 0.2, 0.2), "name": "\nAustralia and New-Zealand"},
                 {"source": "AR6-WGII-Chapter9", "color": (0.65, 0.39, 0.19), "name": "Africa"},
                 {"source": "AR6-WGII-CCP4", "color": (0.86, 0, 0.94), "name": "Mediterranean region"},
                 {"source": "AR6-WGII-Chapter13", "color": (0.92, 0, 0.06), "name": "Europe"},

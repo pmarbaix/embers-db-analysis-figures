@@ -21,7 +21,7 @@ def overview(**kwargs):
 
     # Create plot
     fig = plt.figure(figsize=(4, 8))
-    ax = plt.axes((0.54, 0.05, 0.45, 0.85))  # (left, bottom, width, height)
+    ax = plt.axes((0.54, 0.05, 0.44, 0.85))  # (left, bottom, width, height)
     plt.xlabel('Risk level', fontsize=6)
     for spine in ax.spines.values():
         spine.set_edgecolor(None)
@@ -59,7 +59,7 @@ def overview(**kwargs):
     ax.set_ylim(0.5, icount + 0.5)
 
     # Background
-    soften_col = dset['soften_col'] if 'soften_col' in dset else None
+    soften_col = settings['soften_col'] if 'soften_col' in settings else None
     hlp.embers_col_background(xlim=(-1, 4), ylim=ax.get_ylim(), dir='horiz', soften_col=soften_col)
     hlp.report.write(f"GMT levels shown: {settings['GMT']}")
 
@@ -106,6 +106,8 @@ def riskchart(lbes, dset=None, ax=None, istart=0, data=None):
                 verticalalignment='top')
 
     hlp.report.write(f"Large risk change wrt. GMT ({dset['GMT'][0]}->{dset['GMT'][2]}°C) for:")
+    seplineleft = -0.45
+    plt.hlines(istart + len(lbes) + 0.5, seplineleft, 3.1, color="#AAA", linewidths=0.3, clip_on=False)
     for ibe, be in enumerate(lbes):
 
         i0, c0 = hlp.rfn(be, dset['GMT'][0], conf=True)
@@ -116,7 +118,7 @@ def riskchart(lbes, dset=None, ax=None, istart=0, data=None):
         if (i2 - i0) > 1.25:
             hlp.report.write(f"* {be.longname} - risk level change: {i0:5.2f}->{i2:5.2f} ")
         gid = be.meta['scenariogroup_id']
-        plt.hlines(ebpos, 0, 3, color="#AAA", linewidths=0.3)
+        plt.hlines(ebpos-0.5, seplineleft, 3.1, color="#AAA", linewidths=0.3, clip_on=False)
         name = ""
         citekey = hlp.dict_by_id(figures, be.meta['mainfigure_id'])['biblioreference_cite_key']
         convcite = {'AR6': 'A6', 'SR1': '1.5', 'SRO': 'O', 'SRC': 'L'}
@@ -142,8 +144,7 @@ def riskchart(lbes, dset=None, ax=None, istart=0, data=None):
             adapt_index = hlp.dict_by_id(scenarios, sc_id)['adapt_index']
             adapt = ['■', '■□', '■■', '■■□', '■■■'][int(adapt_index*2)-2]
             plt.rcParams['font.family'] = 'DejaVu Sans'
-            adsympos = -0.05 if i0 > 0.5 else -0.3  # Avoid overlapping adapt. symbol & main dot
-            ax.text(adsympos, ebpos, f"{adapt}", fontsize=4, color='#AAAAAA', verticalalignment='center',
+            ax.text(-0.42, ebpos, f"{adapt}", fontsize=4, color='#AAAAAA', verticalalignment='center',
                     horizontalalignment='left', zorder=2)
 
         # if i3 >= 0:
@@ -156,7 +157,7 @@ def riskchart(lbes, dset=None, ax=None, istart=0, data=None):
             ax.plot(i0, ebpos, 'o', color=colconf(c0), markeredgewidth=0.3, markeredgecolor="white", markersize=2)
         if name:
             plt.rcParams['font.family'] = 'Avenir Next Condensed'
-            ax.text(-0.1, ebpos + 0.4, f"{name}", fontsize=5, color=curcolor,
+            ax.text(-0.5, ebpos + 0.3, f"{name}", fontsize=5, color=curcolor,
                     horizontalalignment='right', verticalalignment='top', wrap=True, linespacing=0.95)
         pi0 = i0
         pi1 = i1
@@ -164,6 +165,7 @@ def riskchart(lbes, dset=None, ax=None, istart=0, data=None):
         ppos = ebpos
         pgid = gid
 
+    ax.vlines(-0.1, 0.5, istart + len(lbes) + 0.5, color="#AAA", linewidth=0.3, clip_on=False)
     ax.set_yticks([])
     ax.set_xticks([0, 1, 2, 3], labels=['Undetectable', 'Moderate', 'High', 'Very\nhigh'], fontsize=6)
 

@@ -20,7 +20,7 @@ from settings_data_access import datasource
 from os.path import join
 
 # Default list of figures to build:
-do_figures = ['5a']
+do_figures = ['7', '8', '8-sup']
 
 
 def make_figures(figures=None, out_path=None):

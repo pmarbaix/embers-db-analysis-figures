@@ -28,7 +28,9 @@ It was tested with python 3.11 and 3.12.
     the same directory.
 
 - Run `python make_figures.py all`. This should give you all figures and tables (you might have to close
-  the window showing each figure before getting the next one). All will be stored in a subdirectory named 'out'.
+  the window opened by matplotlib to show a figure before getting the next one). 
+  All figures and tables will be stored in a subdirectory named 'out/file' or 'out/remote' depending on the selected
+  data source.
 
 To get data from the online API at https://climrisk.org instead of the file archive, see `Embers_retrieve_API.md`
 

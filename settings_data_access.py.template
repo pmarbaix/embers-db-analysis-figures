@@ -18,7 +18,7 @@ elif datasource == "local":
 
 elif datasource == "file":
     # Archive file
-    FILE = "embers-archive-2024.json"
+    FILE = "embers_archive_2024_1.0.0.json"
 
 else:
     raise Exception("'datasource' must be 'local', 'remote' or 'file")

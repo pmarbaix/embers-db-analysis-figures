@@ -5,17 +5,18 @@ It was tested with python 3.11 and 3.12.
 
 ## Basic use
 
-- We suggest creating a python (3.11 or 3.12) virtual environment and activating it.
-
 - Get the project files, either
    - from Zenodo. The access is restricted until ([Marbaix et al. 2024b](#2)) is published or at least
      under public review; then the DOI will be https://doi.org/10.5281/zenodo.12799901
    - from GitHub, for example by running `git clone https://github.com/pmarbaix/embers-db-analysis-figures.git`. 
      This access will be opened approximately at the same time as files are made public on Zenodo.
 
+- We suggest creating a python (3.11 or 3.12) virtual environment and activating it. A valid setup is to create the 
+  venv directory within the root directory of the code which you just obtained.
+
 - Run ```pip install -r requirements.txt```
 
-- Copy `settings_data_access.py.template` to `settings_data_access.py` and adjust the parameters to your needs:
+- Copy `settings_data_access.py.template` to `settings_data_access.py` and adjust the parameters, if needed:
 
     - For `datasource`, chose either `remote` or `file`. 
     - To reproduce the figures from ([Marbaix et al. 2024b](#2)), one only needs to set the following:
@@ -23,6 +24,8 @@ It was tested with python 3.11 and 3.12.
     datasource = "file"
     FILE = path_name_for_the_file_downloaded_from_Marbaix_etal_2024
     ```
+    The template file already indicates the right file name, there is nothing to change if the code and file are in
+    the same directory.
 
 - Run `python make_figures.py all`. This should give you all figures and tables (you might have to close
   the window showing each figure before getting the next one). All will be stored in a subdirectory named 'out'.

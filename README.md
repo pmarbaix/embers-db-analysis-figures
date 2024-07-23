@@ -11,7 +11,7 @@ It was tested with python 3.11 and 3.12.
    - from Zenodo. The access is restricted until ([Marbaix et al. 2024b](#2)) is published or at least
      under public review; then the DOI will be https://doi.org/10.5281/zenodo.12799901
    - from GitHub, for example by running `git clone https://github.com/pmarbaix/embers-db-analysis-figures.git`. 
-   - This access will be opened approximately at the same time as files are made public on Zenodo.
+     This access will be opened approximately at the same time as files are made public on Zenodo.
 
 - Run ```pip install -r requirements.txt```
 

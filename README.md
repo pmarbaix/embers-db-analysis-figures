@@ -5,7 +5,7 @@ It was tested with python 3.11 and 3.12.
 
 ## Basic use
 
-- Create a python virtual environment
+- We suggest creating a python (3.11 or 3.12) virtual environment and activating it.
 
 - Get the project files, either
    - from Zenodo. The access is restricted until ([Marbaix et al. 2024b](#2)) is published or at least

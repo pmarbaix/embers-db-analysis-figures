@@ -1,4 +1,4 @@
-# Creating figures and performing data analyses based on the 'burning embers' database
+# Data analyses and figures based on the 'burning embers' database
 
 This repository contains the code needed to reproduce the figures and tables from ([Marbaix et al. 2024b](#2)).
 It was tested with python 3.11 and 3.12.
@@ -8,8 +8,10 @@ It was tested with python 3.11 and 3.12.
 - Create a python virtual environment
 
 - Get the project files, either
-   - from Zenodo,
-   - from GitHub, for example by running `git clone https://github.com/pmarbaix/EDB_paper.git`
+   - from Zenodo. The access is restricted until ([Marbaix et al. 2024b](#2)) is published or at least
+     under public review; then the DOI will be 10.5281/zenodo.12799901
+   - from GitHub, for example by running `git clone https://github.com/pmarbaix/EDB_paper.git`. This access will be
+     opened approximately at the same time as files are made public on Zenodo.
 
 - Run ```pip install -r requirements.txt```
 

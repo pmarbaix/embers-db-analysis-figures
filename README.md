@@ -1,13 +1,15 @@
-# Code for the analysis and figures in "Climate change risks illustrated by the IPCC burning embers"
+# Creating figures and performing data analyses based on the 'burning embers' database
 
 This repository contains the code needed to reproduce the figures and tables from ([Marbaix et al. 2024b](#2)).
-
-Note: this code was tested with python 3.11 and 3.12.
+It was tested with python 3.11 and 3.12.
 
 ## Basic use
 
-- Create a python virtual environment and get the project files, such as by using 
-  `git clone https://github.com/pmarbaix/EDB_paper.git`
+- Create a python virtual environment
+
+- Get the project files, either
+   - from Zenodo,
+   - from GitHub, for example by running `git clone https://github.com/pmarbaix/EDB_paper.git`
 
 - Run ```pip install -r requirements.txt```
 

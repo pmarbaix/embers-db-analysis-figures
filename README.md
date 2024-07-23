@@ -1,4 +1,4 @@
-# Data analyses and figures based on the 'burning embers' database
+# Code for analysing data and producing figures based on the *burning embers* database
 
 This repository contains the code needed to reproduce the figures and tables from ([Marbaix et al. 2024b](#2)).
 It was tested with python 3.11 and 3.12.

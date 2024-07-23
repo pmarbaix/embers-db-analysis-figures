@@ -1,6 +1,6 @@
 # Code for analysing data and producing figures from the *burning embers* database
 
-This repository contains the code needed to reproduce the figures and tables from ([Marbaix et al. 2024b](#2)).
+This repository contains the code needed to build the figures and tables from ([Marbaix et al. 2024b](#2)).
 It was tested with python 3.11 and 3.12.
 
 ## Basic use

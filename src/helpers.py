@@ -479,6 +479,7 @@ def rfn(be, hazl, conf=False):
 
 
 def hfn(be, rlev):
+    """Returns the hazard level for a given risk level"""
     return np.interp(rlev, be.levels_values('risk'), be.levels_values('hazl'))
     # Note: there was a version of this function with right= 3.2 for testing.
 
@@ -615,3 +616,38 @@ def report_start(settings):
 
 # We use only one "global" report, which is easy to refer to, by importing helpers
 report = Report(None)
+
+
+# AR6 RKR categories
+#                 'Key' : '(Name, representation colour)'
+RKRCATS6_INFO = {'RKR-A': ('Coastal systems', '#04B5C5'),
+                  'RKR-B.C': ('Coastal Ecosystems', '#00929F'),
+                  'RKR-B.O': ('Ocean ecosystems', '#6969E3'),
+                  'RKR-B.T': ('Terrestrial ecosystems', '#008000'),
+                  'RKR-B.X': ('Other ecosystem risks', '#000000'),
+                  'RKR-C': ('Infrastructure', 'EFEF00'),
+                  'RKR-D': ('Living standards', '#FFC386'),
+                  'RKR-E': ('Human health', '#EF0000'),
+                  'RKR-F': ('Food security', '#A66400'),
+                  'RKR-G': ('Water security', '#0400DF'),
+                  'RKR-X': ('Beyond categories', '#606060'),
+                  'RFC': ('Reasons for concern', '#A003030'),
+                  'Undefined': ('Undefined', '#000000')
+                 }
+RKRCATS6 = list(RKRCATS6_INFO)
+
+def rkr_sortkey(be):
+    """
+    Sort key for embers by RKR category
+    :param be: ember
+    :return: sortkey
+    """
+    kws = be.keywords.split(',')
+    if 'RFC' in kws:  # Reason for concern: no RKR category
+        return RKRCATS6.index('RFC')
+    else:
+        rkrs = [kw.strip() for kw in kws if 'RKR' in kw]
+        try:
+            return RKRCATS6.index(rkrs[0])
+        except IndexError:  # This should not happen given all embers are expected to be in a RKR category
+            return RKRCATS6.index('Undefined')

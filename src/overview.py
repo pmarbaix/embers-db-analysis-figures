@@ -5,11 +5,11 @@ import matplotlib.pyplot as plt
 import src.helpers as hlp
 import settings_configs
 import logging
+from itertools import groupby
 
 
 def overview(**kwargs):
     """
-    Cumulative distribution of mid-points within transitions.
     Arguments are passed to get_settings:
     - settings_choice: the name of the desired settings within settings_config.py
     - a list of options, added to the settings
@@ -42,18 +42,33 @@ def overview(**kwargs):
         # ---------------------
         # If nothing else makes a difference, sort by name
         lbes.sort(key=lambda abe: abe.name)
+
         # If there is a scenario (= adaptation related, so far), sort by scenario
         lbes.sort(key=lambda abe: hlp.dict_by_id(scenarios, id=abe.meta['scenario_id'])['adapt_index']
                   if abe.meta['scenario_id'] else -1)
         # Regroup embers in the same scenario group (= adaptation variants)
         lbes.sort(key=lambda abe: abe.meta['scenariogroup_id'] if abe.meta['scenariogroup_id'] else -1)
+
         # Sort by keywords defined in the settings, if any
         if 'sort_keywords' in dset:
             skey_kw = hlp.get_skey_kw(dset['sort_keywords'])
             lbes.sort(key=skey_kw)
 
-        # Draw
-        icount = riskchart(lbes, dset=dset, ax=ax, istart=icount, data=data)
+        # Sort by representative key risk category, if required (= for regions!)
+        if 'sort_RKRs' in dset:
+            lbes.sort(key=hlp.rkr_sortkey)
+
+        # Categorise by RKRs, if required (= for systems)
+        if 'categorise_RKRs' in dset:
+            lbes.sort(key=hlp.rkr_sortkey)
+            gbes = [(g[0], list(g[1])) for g in groupby(lbes, hlp.rkr_sortkey)]
+            colors = ('red', 'green', 'blue', 'magenta')
+            for i, lbes in enumerate(reversed(gbes)):
+                dset['name'], dset['color'] = hlp.RKRCATS6_INFO[hlp.RKRCATS6[lbes[0]]]
+                icount = riskchart(lbes[1], dset=dset, ax=ax, istart=icount, data=data)
+        else:
+            # Draw
+            icount = riskchart(lbes, dset=dset, ax=ax, istart=icount, data=data)
 
     ax.set_xlim(-0.1, 3.1)
     ax.set_ylim(0.5, icount + 0.5)
@@ -126,9 +141,9 @@ def riskchart(lbes, dset=None, ax=None, istart=0, data=None):
         if gid is None:
             name = be.longname
         elif pgid == gid:
-            ax.plot((pi0, i0), (ppos, ebpos), color='black', zorder=3, linewidth=0.3)
-            ax.plot((pi1, i1), (ppos, ebpos), color='black', zorder=3, linewidth=0.3)
-            ax.plot((pi2, i2), (ppos, ebpos), color='black', zorder=3, linewidth=0.3)
+            ax.plot((pi0, i0), (ppos, ebpos), color='#0006', zorder=3, linewidth=0.2, solid_capstyle='round')
+            ax.plot((pi1, i1), (ppos, ebpos), color='#0006', zorder=3, linewidth=0.45, solid_capstyle='round')
+            ax.plot((pi2, i2), (ppos, ebpos), color='#0006', zorder=3, linewidth=0.9, solid_capstyle='round')
         else:
             name = be.group
 
@@ -138,6 +153,9 @@ def riskchart(lbes, dset=None, ax=None, istart=0, data=None):
 
         if name:
             name = f"{name.strip().capitalize()} {name_sfx}"
+            if 'sort_RKRs' in dset: # Add name of RKR category
+                rkr_cat = hlp.RKRCATS6[hlp.rkr_sortkey(be)]
+                name += (f" ({rkr_cat[4] if len(rkr_cat) > 4 else rkr_cat[3:]})")
 
         if be.meta['scenario_id']:
             sc_id = be.meta['scenario_id']
@@ -157,7 +175,7 @@ def riskchart(lbes, dset=None, ax=None, istart=0, data=None):
             ax.plot(i0, ebpos, 'o', color=colconf(c0), markeredgewidth=0.3, markeredgecolor="white", markersize=2)
         if name:
             plt.rcParams['font.family'] = 'Avenir Next Condensed'
-            ax.text(-0.5, ebpos + 0.3, f"{name}", fontsize=5, color=curcolor,
+            ax.text(-0.5, ebpos + 0.3, f"{name}", fontsize=4, color=curcolor,
                     horizontalalignment='right', verticalalignment='top', wrap=True, linespacing=0.95)
         pi0 = i0
         pi1 = i1

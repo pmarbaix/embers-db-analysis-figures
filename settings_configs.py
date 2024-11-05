@@ -170,20 +170,33 @@ def get_settings(settings_choice: str = None, options: list = None, title=None, 
             "soften_col": 2.2,
             "GMT": [1.5, 2.0, 2.5]
         },
+        "overview_RKRs": {  # Paper - revised
+            "source": "AR6-WGII-Chapter2 OR AR6-WGII-Chapter7 OR SRCCL OR SR1.5-Chapter3 OR SROCC",
+            "keywords": "NOT permafrost AND NOT RFC",  # Arctic region is moved to the regional figure (#8).
+            "color": (0, 0.7, 0),
+            "sort_keywords": ['health', 'food', 'food security', 'ecosystem services', 'land', 'forests', 'coast',
+                              'ocean', 'water', 'animal', 'sdg', 'tourism', 'permafrost'],
+            "categorise_RKRs": True,
+            "out_file": "SRs+AR6_noRFC_overview_systems",
+            "soften_col": 2.2,
+            "GMT": [1.5, 2.0, 2.5]
+        },
+
         "overview_regions": {   # Paper
             "multi": [
                 {"source": "AR6-WGII-CCP6", "color": (0.16, 0, 0.87), "name": "Antarctica",
                     "keywords": "Antarctic"},
                 {"source": "AR6-WGII-Chapter11", "color": (0.2, 0.2, 0.2), "name": "\nAustralia and New-Zealand"},
                 {"source": "AR6-WGII-Chapter9", "color": (0.65, 0.39, 0.19), "name": "Africa"},
-                {"source": "AR6-WGII-CCP4", "color": (0.86, 0, 0.94), "name": "Mediterranean region"},
-                {"source": "AR6-WGII-Chapter13", "color": (0.92, 0, 0.06), "name": "Europe"},
+                {"source": "AR6-WGII-CCP4", "color": (0.86, 0, 0.94), "name": "\nMediterranean region"},
+                {"source": "AR6-WGII-Chapter13", "color": (0.92, 0, 0.06), "name": "\nEurope"},
                 {"source": "AR6-WGII-Chapter14", "color": (0.05, 0.35, 0.05), "name": "North-America"},
                 {"source": "AR6-WGII-CCP6", "color": (0.16, 0, 0.87), "name": "Arctic",
                     "keywords": "Arctic",  # The embers of the CCP6 devoted to Arctic (others ar Antarctica, above)
                     "emberids": '27-42'},  # Additional embers about Arctic from SR1.5 and SRCCL Figure 7.1
             ],
             "sort_keywords": ['health', 'food', 'land', 'forests', 'coast', 'ocean', 'water', 'tourism'],
+            "sort_RKRs": True,
             "hide_chapter": True,
             "hide_category": ['Europe:', 'North America:', 'Arctic:', 'Africa:', 'Mediterranean region:',
                               'Antarctic:', 'in Australia'],  # Those are words from the names that would be redundant

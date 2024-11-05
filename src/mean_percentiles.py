@@ -70,6 +70,8 @@ def mean_percentiles(**kwargs):
             emberbase = risk_p50  # if median is shown, it will be the choice for the ember
         else:
             emberbase = risk_avgs
+            hlp.report.write("WARNING: the aggregated ember is based on the mean, not the median.")
+
         # Plot percentiles
         if 'p10-p90' in dset['options']:
             ax.plot(hazlevs, risk_p10, color=dset['style'][0], linestyle="--")
@@ -127,10 +129,10 @@ def mean_percentiles(**kwargs):
 
 def aggreg(lbes, hazlevs: np.array, ax=None, dset=None, exprisk=False, figures=None):
     """
-    Draws the requested percentiles and/or mean among the set of embers (lbes), for each hazard level in hazls.
+    Calculates the requested percentiles and/or mean among the set of embers (lbes), for each hazard level in hazls.
     :param lbes: list of burning embers
     :param hazlevs: list of hazard levels for which to calculate aggregated values
-    :param ax: matplotlib axes
+    :param ax: matplotlib axes - if provided, adds n=, the number of embers for which risk is defined at a given T
     :param dset: settings for the current data subset
     :param exprisk: whether to use an exponential risk index (2**<received index>)
     :param figures: figure list containing data about each figure, for weighting; None => each ember has a weight of 1
@@ -214,7 +216,7 @@ def aggreg(lbes, hazlevs: np.array, ax=None, dset=None, exprisk=False, figures=N
         risk_p10[lev], risk_p50[lev], risk_p90[lev] = (
             hlp.weighted_percentile(risk_hazl, (10.0, 50.0, 90.0), weights=weights))
 
-        if abs(hazl-3.0) < 0.02:  # At 3°C, print information about what is "in" p10 and p90.
+        if abs(hazl-3.0) < 0.02:  # At 3°C, report information about what is within p10 and p90.
             names_risk = list(zip(names, risk_hazl))
             names_risk.sort(key=lambda nr: nr[1])
             hlp.report.write(f"Information about percentiles at 3°C", title=2)
@@ -231,6 +233,7 @@ def aggreg(lbes, hazlevs: np.array, ax=None, dset=None, exprisk=False, figures=N
         if nemb != len(risk_hazl):
             nemb = len(risk_hazl)
             # Show n= when the number of embers changes
+            # This should move to a drawing function if the code is used again.
             if ax:
                 ax.text(hazl, 3.38 - dset["idset"] / 9, f"n={nemb}", color=dset['style'][0],
                         fontsize=8, horizontalalignment='left')

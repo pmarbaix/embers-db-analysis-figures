@@ -14,13 +14,13 @@ from sys import exit, argv
 from src.mean_percentiles import mean_percentiles
 from src.cumulative import cumulative
 from src.overview import overview
-from src.embers_table import embers_table
+from src.embers_table import embers_table, embers_rkr_table
 from src.confidence import confidence
 from settings_data_access import datasource
 from os.path import join
 
 # Default list of figures to build:
-do_figures = ['7', '8', '8-sup']
+do_figures = ['7v2', '8', 'tab3v2' ]
 
 
 def make_figures(figures=None, out_path=None):
@@ -36,7 +36,7 @@ def make_figures(figures=None, out_path=None):
     if not out_path:
         out_path = f"./out/{datasource}/"
 
-    fig = '5a'
+    fig = '5ad'
     if fig in figures or all:
         mean_percentiles(settings_choice="SRs+AR6_global_regional", options=['mean', 'median', 'ember'],
                          out_path=join(out_path,fig),
@@ -58,7 +58,7 @@ def make_figures(figures=None, out_path=None):
         cumulative(settings_choice="SRs+AR6noRFC", out_path=join(out_path,fig),
                    title="Figure 5(c) - ALT:Cumulative distribution of\ntransitions mid-points (AR6+SRs, excl. RFCs)")
 
-    fig = '5e'
+    fig = '5ef'
     if fig in figures or all:
         mean_percentiles(settings_choice="SRs+AR6_global_regional", options=['mean', 'median', 'ember', 'wchapter'],
                          out_path=join(out_path,fig), title="Figure 5(e)+(f) - Global vs regional + chapter weighting")
@@ -90,21 +90,29 @@ def make_figures(figures=None, out_path=None):
     if fig in figures or all:
         overview(settings_choice="overview_systems", out_path=join(out_path,fig),
                  title="Figure 7: Overview - systems")
+    fig = '7v2'
+    if fig in figures or all:
+        overview(settings_choice="overview_RKRs", out_path=join(out_path,fig),
+                 title="Figure 7v2: Overview - RKRs")
 
     fig = '8'
     if fig in figures or all:
         overview(settings_choice="overview_regions", out_path=join(out_path,fig),
                  title="Figure 8: Overview - regional")
-
     fig = '8-sup'
     if fig in figures or all:
         overview(settings_choice="overview_reg_3.5", out_path=join(out_path,fig),
                  title="Figure 8: Overview - regional - 1.5, 2.5, 3.5°C")
 
-    fig = 'tab2'
+    fig = 'tab3'
     if fig in figures or all:
         embers_table(settings_choice="All_included", out_path=join(out_path,fig),
-                     title="Table 2")
+                     title="Table 3")  # Preprint version (Chapters)
+
+    fig = 'tab3v2'
+    if fig in figures or all:
+        embers_rkr_table(settings_choice="All_included", out_path=join(out_path,fig),
+                         title="Table 3 - version 2")  # Revised manuscript version (RKRs)
 
     fig = 'tab4'
     if fig in figures or all:

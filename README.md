@@ -6,10 +6,8 @@ It was tested with python 3.11 and 3.12.
 ## Basic use
 
 - Get the project files, either
-   - from Zenodo. The access is restricted until ([Marbaix et al. 2024b](#2)) is published or at least
-     under public review; then the DOI will be https://doi.org/10.5281/zenodo.12799901
+   - from Zenodo: https://doi.org/10.5281/zenodo.12799900
    - from GitHub, for example by running `git clone https://github.com/pmarbaix/embers-db-analysis-figures.git`. 
-     This access will be opened approximately at the same time as files are made public on Zenodo.
 
 - We suggest creating a python (3.11 or 3.12) virtual environment and activating it. A valid setup is to create the 
   venv directory within the root directory of the code which you just obtained.
@@ -61,4 +59,4 @@ Zenodo. [doi.org/10.5281/zenodo.12626977](https://doi.org/10.5281/zenodo.1262697
 <a id="2">Marbaix et al. (2024b)</a> 
 Marbaix, P., A. K. Magnan, V. Muccione, P. W. Thorne, Z. Zommers (2024).
 *Climate change risks illustrated by the IPCC 'burning embers'*.
-Prepared for submission to [ESSD](https://www.earth-system-science-data.net).
+Submitted to ESSD: https://essd.copernicus.org/preprints/essd-2024-312/.

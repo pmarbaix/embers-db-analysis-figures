@@ -62,7 +62,6 @@ def overview(**kwargs):
         if 'categorise_RKRs' in dset:
             lbes.sort(key=hlp.rkr_sortkey)
             gbes = [(g[0], list(g[1])) for g in groupby(lbes, hlp.rkr_sortkey)]
-            colors = ('red', 'green', 'blue', 'magenta')
             for i, lbes in enumerate(reversed(gbes)):
                 dset['name'], dset['color'] = hlp.RKRCATS6_INFO[hlp.RKRCATS6[lbes[0]]]
                 icount = riskchart(lbes[1], dset=dset, ax=ax, istart=icount, data=data)
@@ -153,9 +152,9 @@ def riskchart(lbes, dset=None, ax=None, istart=0, data=None):
 
         if name:
             name = f"{name.strip().capitalize()} {name_sfx}"
-            if 'sort_RKRs' in dset: # Add name of RKR category
+            if 'sort_RKRs' in dset:  # Add name of RKR category
                 rkr_cat = hlp.RKRCATS6[hlp.rkr_sortkey(be)]
-                name += (f" ({rkr_cat[4] if len(rkr_cat) > 4 else rkr_cat[3:]})")
+                name += f" ({rkr_cat[4] if len(rkr_cat) > 4 else rkr_cat[3:]})"
 
         if be.meta['scenario_id']:
             sc_id = be.meta['scenario_id']

@@ -153,7 +153,7 @@ def stringmatch(criteria, text):
     # Regex to insert blanks as word boundaries
     wordbounds = r'([.,;-])'
     # Get string to search within, with all word boundaries
-    ptext = " " + re.sub(wordbounds, r' \1 ',text).translate(blanks).lower() + " "
+    ptext = " " + re.sub(wordbounds, r' \1 ', text).translate(blanks).lower() + " "
     # Ignore plural forms = just remove 's' when at end of a word.
     ptext = ptext.replace("s ", " ")
     for ex in pexp:
@@ -606,7 +606,7 @@ def report_start(settings):
     global report
     dir, file = path.split(settings['out_file'])
     repfile = path.join(dir, 'reports', file)
-    repdir  = path.split(repfile)[0]
+    repdir = path.split(repfile)[0]
     if not path.exists(repdir):
         makedirs(repdir)
     report = Report(repfile)
@@ -621,20 +621,21 @@ report = Report(None)
 # AR6 RKR categories
 #                 'Key' : '(Name, representation colour)'
 RKRCATS6_INFO = {'RKR-A': ('Coastal systems', '#04B5C5'),
-                  'RKR-B.C': ('Coastal Ecosystems', '#00929F'),
-                  'RKR-B.O': ('Ocean ecosystems', '#6969E3'),
-                  'RKR-B.T': ('Terrestrial ecosystems', '#008000'),
-                  'RKR-B.X': ('Other ecosystem risks', '#000000'),
-                  'RKR-C': ('Infrastructure', 'EFEF00'),
-                  'RKR-D': ('Living standards', '#FFC386'),
-                  'RKR-E': ('Human health', '#EF0000'),
-                  'RKR-F': ('Food security', '#A66400'),
-                  'RKR-G': ('Water security', '#0400DF'),
-                  'RKR-X': ('Beyond categories', '#606060'),
-                  'RFC': ('Reasons for concern', '#A003030'),
-                  'Undefined': ('Undefined', '#000000')
+                 'RKR-B.C': ('Coastal Ecosystems', '#00929F'),
+                 'RKR-B.O': ('Ocean ecosystems', '#6969E3'),
+                 'RKR-B.T': ('Terrestrial ecosystems', '#008000'),
+                 'RKR-B.X': ('Other ecosystem risks', '#000000'),
+                 'RKR-C': ('Infrastructure', 'EFEF00'),
+                 'RKR-D': ('Living standards', '#FFC386'),
+                 'RKR-E': ('Human health', '#EF0000'),
+                 'RKR-F': ('Food security', '#A66400'),
+                 'RKR-G': ('Water security', '#0400DF'),
+                 'RKR-X': ('Beyond categories', '#606060'),
+                 'RFC': ('Reasons for concern', '#A003030'),
+                 'Undefined': ('Undefined', '#000000')
                  }
 RKRCATS6 = list(RKRCATS6_INFO)
+
 
 def rkr_sortkey(be):
     """

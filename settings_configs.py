@@ -151,7 +151,8 @@ def get_settings(settings_choice: str = None, options: list = None, title=None, 
         "overview_systems": {   # Paper
             "multi": [
                 {"source": "AR6-WGII-Chapter2 OR AR6-WGII-Chapter7 OR SRCCL OR SR1.5-Chapter3 OR SROCC",
-                 "keywords": "ecosystems AND NOT RFC AND NOT 'ecosystem services' AND NOT 'human' AND NOT 'ocean' AND NOT 'coast'",
+                 "keywords": "ecosystems AND NOT RFC AND NOT 'ecosystem services' AND NOT ('humans' OR 'human') "
+                             "AND NOT 'ocean' AND NOT 'coast'",
                  "name": "\n\nLand ecosystems",
                  "color": (0, 0.7, 0)},
                 {"source": "AR6-WGII-Chapter2 OR AR6-WGII-Chapter7 OR SRCCL OR SR1.5-Chapter3 OR SROCC",
